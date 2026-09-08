@@ -447,7 +447,8 @@ function renderSecretSetup() {
         else { send({ type: "secret-set", secret: value }); renderWaiting("Secret number locked", "Waiting for the host to start the first turn."); }
     });
     const savedLobby = getLobbyCookie();
-    const savedSecret = savedLobby && savedLobby.lobbyCode === (game.hostCode || (game.peer && game.peer.id))
+    const savedSecret = game.role === "guest" && savedLobby && savedLobby.nickname === game.nickname
+        && savedLobby.lobbyCode === (game.hostCode || (game.peer && game.peer.id))
         ? savedLobby.secret
         : null;
     if (Number.isInteger(savedSecret) && savedSecret >= 1 && savedSecret <= game.maxNumber) {
@@ -458,6 +459,10 @@ function renderSecretSetup() {
 }
 function maybeStartGame() {
     if (game.secrets[0] === null || game.secrets[1] === null) {
+        if (game.role === "host" && game.secrets[0] === null) {
+            renderSecretSetup();
+            return;
+        }
         renderWaiting("Secret number locked", `Waiting for ${game.secrets[0] === null ? playerName(0) : playerName(1)} to choose a number.`); return;
     }
     game.phase = "turn"; game.currentPlayer = 0; broadcastState(); renderNetworkState();
