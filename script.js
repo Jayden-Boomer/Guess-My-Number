@@ -470,7 +470,7 @@ function maybeStartGame() {
 function renderWaiting(title, copy) {
     gameCard.innerHTML = ""; const view = cloneTemplate("handoffTemplate");
     view.querySelector(".screen-title").textContent = title; view.querySelector(".screen-copy").textContent = copy;
-    renderHistoryInto(view, Boolean(game.pendingQuestion));
+    appendConversation(view, Boolean(game.pendingQuestion));
     gameCard.appendChild(view);
 }
 function renderNetworkState() {
@@ -547,7 +547,7 @@ function renderTurn() {
         if (Number.isInteger(value) && value >= 1 && value <= game.maxNumber) guessInput.value = value;
     });
     view.querySelector(".guess-form").addEventListener("submit", event => { event.preventDefault(); const guess = Number(guessValue.value); if (!Number.isInteger(guess) || guess < 1 || guess > game.maxNumber) guessError.textContent = `Enter a whole number from 1 to ${game.maxNumber}.`; else { guessInput.value = guess; submitAction({ type: "guess", guess }); } });
-    view.querySelector(".rules-btn").addEventListener("click", () => rulesDialog.showModal()); renderHistoryInto(view); gameCard.appendChild(view); setTimeout(() => questionInput.focus(), 0);
+    view.querySelector(".rules-btn").addEventListener("click", () => rulesDialog.showModal()); appendConversation(view); gameCard.appendChild(view); setTimeout(() => questionInput.focus(), 0);
 }
 function renderAnswer() {
     gameCard.innerHTML = ""; const view = cloneTemplate("answerTemplate"); const pending = game.pendingQuestion;
@@ -556,7 +556,12 @@ function renderAnswer() {
     const input = view.querySelector("#answerInput");
     const answerCharCount = view.querySelector(".answer-char-count");
     view.querySelector(".answer-form").addEventListener("submit", event => { event.preventDefault(); const answer = input.value.trim(); if (!answer) view.querySelector(".answer-error").textContent = "Enter an answer first."; else submitAction({ type: "answer", answer }); });
-    input.addEventListener("input", () => answerCharCount.textContent = `${input.value.length} / 220`); renderHistoryInto(view, true); gameCard.appendChild(view); setTimeout(() => input.focus(), 0);
+    input.addEventListener("input", () => answerCharCount.textContent = `${input.value.length} / 220`); appendConversation(view, true); gameCard.appendChild(view); setTimeout(() => input.focus(), 0);
+}
+function appendConversation(view, includePending = false) {
+    const conversation = cloneTemplate("conversationTemplate");
+    renderHistoryInto(conversation, includePending);
+    view.querySelector(".screen").appendChild(conversation);
 }
 function renderHistoryInto(view, includePending = false) {
     const list = view.querySelector(".history-list"); view.querySelector(".history-count").textContent = `${game.history.length} turn${game.history.length === 1 ? "" : "s"} recorded`;

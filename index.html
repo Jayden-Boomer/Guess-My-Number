@@ -108,19 +108,23 @@
     </template>
 
     <template id="handoffTemplate">
-        <div class="screen handoff-screen">
+        <div class="screen">
             <div class="handoff-message">
                 <h2 class="screen-title"></h2>
                 <p class="screen-copy"></p>
             </div>
-            <div class="history-section handoff-history">
-                <div class="history-heading">
-                    <h3>Conversation</h3>
-                    <span class="history-count"></span>
-                </div>
-                <div class="history-list"></div>
-            </div>
         </div>
+    </template>
+
+    <template id="conversationTemplate">
+        <div class="conversation-divider" aria-hidden="true"></div>
+        <section class="conversation-card">
+            <div class="history-heading">
+                <h3>Conversation</h3>
+                <span class="history-count"></span>
+            </div>
+            <div class="history-list"></div>
+        </section>
     </template>
 
     <template id="turnTemplate">
@@ -169,13 +173,6 @@
                 </form>
             </div>
 
-            <div class="history-section">
-                <div class="history-heading">
-                    <h3>Conversation</h3>
-                    <span class="history-count"></span>
-                </div>
-                <div class="history-list"></div>
-            </div>
         </div>
     </template>
 
@@ -206,13 +203,6 @@
                 <button class="primary-btn wide-btn" type="submit">Submit answer</button>
             </form>
 
-            <div class="history-section">
-                <div class="history-heading">
-                    <h3>Conversation</h3>
-                    <span class="history-count"></span>
-                </div>
-                <div class="history-list"></div>
-            </div>
         </div>
     </template>
 
