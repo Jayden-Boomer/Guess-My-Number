@@ -13,9 +13,17 @@ PeerJS's public cloud signaling service is used by default. The game host keeps 
 
 ## TURN relay setup
 
-The browser cannot run a TURN server itself. This repository includes [`turnserver.conf.example`](turnserver.conf.example) for [coturn](https://github.com/coturn/coturn), which must run on a server with a public IP address. Copy it to `turnserver.conf`, set the public IP, realm, and a long random shared secret, then start coturn with that file.
+The browser cannot run a TURN server itself. This project uses Cloudflare's TURN credential API through the Worker in [`worker.js`](worker.js). The Worker keeps the Cloudflare API token private and returns short-lived credentials to the static browser app.
 
-Create `turn-config.js` from [`turn-config.example.js`](turn-config.example.js) during deployment. Set `iceServers` to the coturn `turn:` and `turns:` URLs and provide short-lived credentials from your TURN credential service. Do not commit real TURN credentials. If `turn-config.js` is absent or has no servers, the game still works where direct WebRTC connectivity is possible.
+Deploy the Worker, configure `TURN_KEY_ID`, `TURN_API_TOKEN`, and `ALLOWED_ORIGIN` as Worker secrets/variables, then set the Worker URL in [`turn-config.js`](turn-config.js). `TURN_API_TOKEN` must never be placed in the static site. For example:
+
+```sh
+wrangler secret put TURN_API_TOKEN
+wrangler secret put TURN_KEY_ID
+wrangler secret put ALLOWED_ORIGIN
+```
+
+Set `ALLOWED_ORIGIN` to the exact HTTPS origin hosting the game. Cloudflare credentials expire after one hour. If the Worker is unavailable, the game still attempts direct WebRTC connectivity.
 
 Rules implemented:
 

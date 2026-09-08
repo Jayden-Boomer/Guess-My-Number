@@ -7,10 +7,18 @@ const NICKNAME_COOKIE = "hidden-number-duel-nickname";
 const NICKNAME_COOKIE_MAX_AGE = 315360000;
 const DEFAULT_ICE_SERVERS = [{ urls: "stun:stun.l.google.com:19302" }];
 
-function peerOptions() {
+async function peerOptions() {
     const configuredServers = window.HIDDEN_NUMBER_DUEL_TURN?.iceServers;
-    const iceServers = Array.isArray(configuredServers) && configuredServers.length
-        ? [...DEFAULT_ICE_SERVERS, ...configuredServers]
+    let relayServers = configuredServers;
+    const credentialEndpoint = window.HIDDEN_NUMBER_DUEL_TURN?.credentialEndpoint;
+    if (credentialEndpoint) {
+        try {
+            const response = await fetch(credentialEndpoint, { credentials: "omit" });
+            if (response.ok) relayServers = (await response.json()).iceServers;
+        } catch { /* Direct WebRTC can still work without a relay. */ }
+    }
+    const iceServers = Array.isArray(relayServers) && relayServers.length
+        ? [...DEFAULT_ICE_SERVERS, ...relayServers]
         : DEFAULT_ICE_SERVERS;
     return { config: { iceServers } };
 }
@@ -314,13 +322,14 @@ function renderLobby(role, errorMessage = "") {
     gameCard.appendChild(view);
 }
 
-function startHosting(resumingMatch = false, lobbyCode = null) {
+async function startHosting(resumingMatch = false, lobbyCode = null) {
     if (typeof Peer === "undefined") { renderLobby("host", "PeerJS could not load. Check your internet connection and try again."); return; }
     if (game.reconnectTimer) { clearTimeout(game.reconnectTimer); game.reconnectTimer = null; }
     game.role = "host";
     if (!resumingMatch) game.names = [game.nickname, null];
     game.takeoverHost = resumingMatch;
-    game.peer = lobbyCode ? new Peer(lobbyCode, peerOptions()) : new Peer(peerOptions()); renderLobby("host");
+    const options = await peerOptions();
+    game.peer = lobbyCode ? new Peer(lobbyCode, options) : new Peer(options); renderLobby("host");
     game.reconnecting = false;
     watchPeerConnection();
     game.peer.on("open", () => {
@@ -347,7 +356,7 @@ function startHosting(resumingMatch = false, lobbyCode = null) {
     game.peer.on("error", error => setStatus(error.type === "peer-unavailable" ? "That lobby was not found." : "PeerJS could not connect.", true));
 }
 
-function startJoining(hostCode, errorElement) {
+async function startJoining(hostCode, errorElement) {
     if (!hostCode) { errorElement.textContent = "Enter the host lobby code."; return; }
     if (typeof Peer === "undefined") { errorElement.textContent = "PeerJS could not load. Check your internet connection and try again."; return; }
     if (game.reconnectTimer) { clearTimeout(game.reconnectTimer); game.reconnectTimer = null; }
@@ -356,7 +365,8 @@ function startJoining(hostCode, errorElement) {
     setLobbyCookie(hostCode, game.nickname, savedLobby && savedLobby.lobbyCode === hostCode ? savedLobby.secret : null);
     if (savedLobby && Number.isInteger(savedLobby.secret)) game.secrets[1] = savedLobby.secret;
     if (game.peer && !game.peer.destroyed) game.peer.destroy();
-    game.connection = null; game.peer = new Peer(peerOptions()); renderLobby("connecting");
+    const options = await peerOptions();
+    game.connection = null; game.peer = new Peer(options); renderLobby("connecting");
     watchPeerConnection();
     game.peer.on("open", () => {
         const connection = game.peer.connect(hostCode);

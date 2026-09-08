@@ -1,10 +1,4 @@
-// Replace this file at deployment time with credentials issued by your TURN service.
+// Set this to the public URL of the Cloudflare Worker in worker.js.
 window.HIDDEN_NUMBER_DUEL_TURN = {
-    iceServers: [
-        {
-            urls: ["turn:turn.example.com:3478?transport=udp", "turns:turn.example.com:5349?transport=tcp"],
-            username: "temporary-username",
-            credential: "temporary-credential"
-        }
-    ]
+    credentialEndpoint: "https://YOUR-WORKER.YOUR-SUBDOMAIN.workers.dev/turn-credentials"
 };
