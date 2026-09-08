@@ -470,6 +470,7 @@ function maybeStartGame() {
 function renderWaiting(title, copy) {
     gameCard.innerHTML = ""; const view = cloneTemplate("handoffTemplate");
     view.querySelector(".screen-title").textContent = title; view.querySelector(".screen-copy").textContent = copy;
+    renderHistoryInto(view, Boolean(game.pendingQuestion));
     gameCard.appendChild(view);
 }
 function renderNetworkState() {
@@ -524,11 +525,12 @@ function renderTurn() {
     const tabs = [...view.querySelectorAll(".mode-tab")]; const questionPanel = view.querySelector(".question-panel"); const guessPanel = view.querySelector(".guess-panel");
     tabs.forEach(tab => tab.addEventListener("click", () => { tabs.forEach(item => item.classList.toggle("active", item === tab)); const isQuestion = tab.dataset.mode === "question"; questionPanel.classList.toggle("hidden", !isQuestion); guessPanel.classList.toggle("hidden", isQuestion); }));
     const questionInput = view.querySelector("#questionInput"); const questionError = view.querySelector(".question-error");
+    const charCount = view.querySelector(".char-count");
     questionInput.value = game.questionDraft;
-    view.querySelector(".char-count").textContent = `${questionInput.value.length} / 180`;
+    charCount.textContent = `${questionInput.value.length} / 180`;
     questionInput.addEventListener("input", () => {
         game.questionDraft = questionInput.value;
-        view.querySelector(".char-count").textContent = `${questionInput.value.length} / 180`;
+        charCount.textContent = `${questionInput.value.length} / 180`;
         questionError.textContent = "";
     });
     view.querySelector(".question-form").addEventListener("submit", event => {
@@ -552,12 +554,19 @@ function renderAnswer() {
     view.querySelector(".answer-label").textContent = `${playerName(pending.answerer)} • answer about your secret number`; view.querySelector(".asked-question").textContent = pending.question;
     view.querySelector(".own-secret-number").textContent = game.secrets[localPlayer()] ?? "hidden";
     const input = view.querySelector("#answerInput");
+    const answerCharCount = view.querySelector(".answer-char-count");
     view.querySelector(".answer-form").addEventListener("submit", event => { event.preventDefault(); const answer = input.value.trim(); if (!answer) view.querySelector(".answer-error").textContent = "Enter an answer first."; else submitAction({ type: "answer", answer }); });
-    input.addEventListener("input", () => view.querySelector(".answer-char-count").textContent = `${input.value.length} / 220`); gameCard.appendChild(view); setTimeout(() => input.focus(), 0);
+    input.addEventListener("input", () => answerCharCount.textContent = `${input.value.length} / 220`); renderHistoryInto(view, true); gameCard.appendChild(view); setTimeout(() => input.focus(), 0);
 }
-function renderHistoryInto(view) {
+function renderHistoryInto(view, includePending = false) {
     const list = view.querySelector(".history-list"); view.querySelector(".history-count").textContent = `${game.history.length} turn${game.history.length === 1 ? "" : "s"} recorded`;
-    if (!game.history.length) { list.innerHTML = `<div class="history-empty">No questions or guesses yet.</div>`; return; }
+    if (!game.history.length && !includePending) { list.innerHTML = `<div class="history-empty">No questions or guesses yet.</div>`; return; }
+    if (includePending && game.pendingQuestion) {
+        const entry = document.createElement("div"); entry.className = "history-item";
+        entry.innerHTML = `<div class="history-meta">${playerName(game.pendingQuestion.asker)} asked • awaiting answer</div><p></p>`;
+        entry.querySelector("p").textContent = `“${game.pendingQuestion.question}”`;
+        list.appendChild(entry);
+    }
     [...game.history].reverse().forEach(item => {
         const entry = document.createElement("div"); entry.className = "history-item";
         if (item.type === "question") { entry.innerHTML = `<div class="history-meta">${playerName(item.asker)} asked</div><p></p><p class="answer"></p>`; entry.querySelector("p").textContent = `“${item.question}”`; entry.querySelector(".answer").textContent = `${playerName(item.answerer)}: ${item.answer}`; }

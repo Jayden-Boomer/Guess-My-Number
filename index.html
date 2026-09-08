@@ -108,9 +108,18 @@
     </template>
 
     <template id="handoffTemplate">
-        <div class="screen centered">
-            <h2 class="screen-title"></h2>
-            <p class="screen-copy"></p>
+        <div class="screen handoff-screen">
+            <div class="handoff-message">
+                <h2 class="screen-title"></h2>
+                <p class="screen-copy"></p>
+            </div>
+            <div class="history-section handoff-history">
+                <div class="history-heading">
+                    <h3>Conversation</h3>
+                    <span class="history-count"></span>
+                </div>
+                <div class="history-list"></div>
+            </div>
         </div>
     </template>
 
@@ -196,6 +205,14 @@
                 <p class="error answer-error" role="alert"></p>
                 <button class="primary-btn wide-btn" type="submit">Submit answer</button>
             </form>
+
+            <div class="history-section">
+                <div class="history-heading">
+                    <h3>Conversation</h3>
+                    <span class="history-count"></span>
+                </div>
+                <div class="history-list"></div>
+            </div>
         </div>
     </template>
 
