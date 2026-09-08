@@ -14,8 +14,7 @@
 	--surface-game-start: rgba(26, 31, 43, 0.97);
 	--surface-game-end: rgba(18, 22, 31, 0.98);
 	--surface-panel: rgba(10, 14, 21, 0.36);
-	--blue-soft: rgba(59, 130, 246, 0.13);
-	--blue-glow: rgba(59, 130, 246, 0.22);
+	--blue: #3b82f6;
 	--blue-highlight: #60a5fa;
 	--text-badge: #93c5fd;
 	--text-history-meta: #b7c1d0;
@@ -172,7 +171,7 @@ h1 {
 	margin-bottom: 16px;
 	padding: 7px 10px;
 	border-radius: 10px;
-	background: var(--blue-soft);
+	background: rgb(from var(--blue) r g b / 13%);
 	color: var(--text-badge);
 	font-size: 0.76rem;
 	font-weight: 800;
@@ -218,7 +217,7 @@ input:focus,
 textarea:focus,
 select:focus {
 	border-color: var(--accent-theme-color);
-	box-shadow: 0 0 0 4px var(--blue-soft);
+	box-shadow: 0 0 0 4px rgb(from var(--blue) r g b / 13%);
 }
 
 .number-row {
@@ -446,7 +445,7 @@ select:focus {
 	);
 	color: var(--white);
 	font-weight: 800;
-	box-shadow: 0 10px 24px var(--blue-glow);
+	box-shadow: 0 10px 24px rgb(from var(--blue) r g b / 22%);
 }
 
 .primary-btn:hover {
@@ -506,7 +505,7 @@ select:focus {
 	height: 78px;
 	margin-bottom: 22px;
 	border-radius: 24px;
-	background: var(--blue-soft);
+	background: rgb(from var(--blue) r g b / 13%);
 	color: var(--text-badge);
 	font-size: 2rem;
 	font-weight: 900;
