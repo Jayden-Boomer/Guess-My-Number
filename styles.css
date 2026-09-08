@@ -8,7 +8,6 @@
 	--text: #f4f7fb;
 	--muted: #9ca8ba;
 	--line: #2a3343;
-	--accent: var(--accent-theme-color);
 	--danger: #ff6b7a;
 	--white: #ffffff;
 	--surface-input: #111620;
@@ -88,7 +87,7 @@ button {
 
 .eyebrow {
 	margin: 0 0 8px;
-	color: var(--accent);
+	color: var(--accent-theme-color);
 	letter-spacing: 0.16em;
 	font-size: 0.75rem;
 	font-weight: 800;
@@ -221,7 +220,7 @@ textarea {
 input:focus,
 textarea:focus,
 select:focus {
-	border-color: var(--accent);
+	border-color: var(--accent-theme-color);
 	box-shadow: 0 0 0 4px var(--blue-soft);
 }
 
@@ -242,7 +241,7 @@ select:focus {
 	width: 100%;
 	height: 8px;
 	padding: 0;
-	accent-color: var(--accent);
+	accent-color: var(--accent-theme-color);
 	background: var(--line);
 	border: 0;
 	border-radius: 999px;
@@ -254,8 +253,8 @@ select:focus {
 	height: 24px;
 	border: 3px solid var(--text);
 	border-radius: 50%;
-	background: var(--accent);
-	box-shadow: 0 0 0 4px rgb(from var(--accent) r g b / 16%);
+	background: var(--accent-theme-color);
+	box-shadow: 0 0 0 4px rgb(from var(--accent-theme-color) r g b / 16%);
 	appearance: none;
 }
 
@@ -264,22 +263,22 @@ select:focus {
 	height: 18px;
 	border: 3px solid var(--text);
 	border-radius: 50%;
-	background: var(--accent);
-	box-shadow: 0 0 0 4px rgb(from var(--accent) r g b / 16%);
+	background: var(--accent-theme-color);
+	box-shadow: 0 0 0 4px rgb(from var(--accent-theme-color) r g b / 16%);
 }
 
 .guess-slider:focus-visible {
-	box-shadow: 0 0 0 4px rgb(from var(--accent) r g b / 16%);
+	box-shadow: 0 0 0 4px rgb(from var(--accent-theme-color) r g b / 16%);
 }
 
 .guess-value-input {
 	min-width: 64px;
 	height: 52px;
 	padding: 0 8px;
-	border: 1px solid rgb(from var(--accent) r g b / 35%);
+	border: 1px solid rgb(from var(--accent-theme-color) r g b / 35%);
 	border-radius: 13px;
-	background: rgb(from var(--accent) r g b / 8%);
-	color: var(--accent);
+	background: rgb(from var(--accent-theme-color) r g b / 8%);
+	color: var(--accent-theme-color);
 	font-size: 1.15rem;
 	font-weight: 800;
 	line-height: 50px;
@@ -353,14 +352,14 @@ select:focus {
 }
 
 .lobby-mode-btn.active {
-	background: rgb(from var(--accent) r g b / 12%);
+	background: rgb(from var(--accent-theme-color) r g b / 12%);
 	color: var(--text);
-	outline: 1px solid rgb(from var(--accent) r g b / 35%);
+	outline: 1px solid rgb(from var(--accent-theme-color) r g b / 35%);
 	box-shadow: 0 4px 14px var(--shadow-control);
 }
 
 .lobby-mode-btn:focus-visible {
-	outline: 2px solid var(--accent);
+	outline: 2px solid var(--accent-theme-color);
 	outline-offset: 2px;
 }
 
@@ -368,10 +367,10 @@ select:focus {
 	width: fit-content;
 	margin: 24px 0 4px;
 	padding: 16px 20px;
-	border: 1px solid rgb(from var(--accent) r g b / 35%);
+	border: 1px solid rgb(from var(--accent-theme-color) r g b / 35%);
 	border-radius: 14px;
-	background: rgb(from var(--accent) r g b / 8%);
-	color: var(--accent);
+	background: rgb(from var(--accent-theme-color) r g b / 8%);
+	color: var(--accent-theme-color);
 	font-size: 1.4rem;
 	font-weight: 800;
 	letter-spacing: 0.12em;
@@ -443,7 +442,11 @@ select:focus {
 .primary-btn {
 	min-height: 52px;
 	padding: 0 20px;
-	background: linear-gradient(135deg, var(--accent), var(--theme-color));
+	background: linear-gradient(
+		135deg,
+		var(--accent-theme-color),
+		var(--theme-color)
+	);
 	color: var(--white);
 	font-weight: 800;
 	box-shadow: 0 10px 24px var(--blue-glow);
@@ -514,7 +517,7 @@ select:focus {
 
 .winner-icon {
 	background: rgb(from var(--blue-highlight) r g b / 12%);
-	color: var(--accent);
+	color: var(--accent-theme-color);
 }
 
 .turn-header,
@@ -545,9 +548,9 @@ select:focus {
 }
 
 .mode-tab.active {
-	background: rgb(from var(--accent) r g b / 12%);
+	background: rgb(from var(--accent-theme-color) r g b / 12%);
 	color: var(--text);
-	outline: 1px solid rgb(from var(--accent) r g b / 35%);
+	outline: 1px solid rgb(from var(--accent-theme-color) r g b / 35%);
 	box-shadow: 0 4px 14px var(--shadow-control);
 }
 
@@ -649,15 +652,15 @@ select:focus {
 	gap: 16px;
 	margin: 0 0 24px;
 	padding: 14px 16px;
-	border: 1px solid rgb(from var(--accent) r g b / 25%);
+	border: 1px solid rgb(from var(--accent-theme-color) r g b / 25%);
 	border-radius: 14px;
-	background: rgb(from var(--accent) r g b / 8%);
+	background: rgb(from var(--accent-theme-color) r g b / 8%);
 	color: var(--muted);
 	font-size: 0.88rem;
 }
 
 .own-secret-number {
-	color: var(--accent);
+	color: var(--accent-theme-color);
 	font-size: 1.2rem;
 }
 
@@ -665,7 +668,7 @@ select:focus {
 	position: absolute;
 	left: 16px;
 	top: 6px;
-	color: var(--accent);
+	color: var(--accent-theme-color);
 	font-size: 2.3rem;
 	font-weight: 800;
 }
