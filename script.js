@@ -184,11 +184,14 @@ function renderStart() {
     nickname.value = getNicknameCookie();
     const savedLobby = getLobbyCookie();
     if (savedLobby) {
+        const rejoinSeparator = document.createElement("div");
+        rejoinSeparator.className = "rejoin-separator";
+        rejoinSeparator.textContent = "or";
         const rejoinButton = document.createElement("button");
         rejoinButton.type = "button";
         rejoinButton.className = "ghost-btn wide-btn rejoin-btn";
         rejoinButton.textContent = `Rejoin ${savedLobby.rejoinName || savedLobby.nickname}'s lobby`;
-        joinField.after(rejoinButton);
+        joinField.after(rejoinSeparator, rejoinButton);
         rejoinButton.addEventListener("click", () => {
             nickname.value = savedLobby.nickname;
             game.nickname = savedLobby.nickname;
