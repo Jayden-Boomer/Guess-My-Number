@@ -29,3 +29,9 @@ Rules implemented:
 - After an answer, the answering player becomes the next asker.
 - An incorrect guess ends the player's turn.
 - A correct guess wins the game.
+
+## Code organization
+
+- `script.js`: game state, rules, turn processing, and UI rendering.
+- `network.js`: PeerJS connections, ICE/TURN options, lobby cookies, reconnect/host takeover, and multiplayer messages. It loads before `script.js` and calls the game/UI functions when network events arrive.
+- `turn-config.js`: deployment-specific TURN server configuration.
