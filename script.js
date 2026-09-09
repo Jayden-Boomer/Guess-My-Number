@@ -107,27 +107,14 @@ function showHandoffDialog(copy, allowManualClose = false) {
 }
 function renderStart() {
     document.querySelector(".range-pill").classList.add("hidden");
-    gameCard.innerHTML = `<div class="screen">
-        <div class="step-badge">Start a duel</div>
-        <h2 class="screen-title">Enter the arena</h2>
-        <p class="screen-copy">Choose a nickname, then host a new lobby or join a duel already waiting for you.</p>
-        <form class="secret-form start-form">
-            <label for="startNickname">Your nickname</label>
-            <input id="startNickname" type="text" maxlength="${MAX_NICKNAME_LENGTH}" autocomplete="nickname" required />
-            <span class="lobby-mode-label">Lobby mode</span>
-            <div class="lobby-mode-buttons" role="group" aria-label="Lobby mode">
-                <button type="button" class="lobby-mode-btn active" data-mode="host" aria-pressed="true">Host lobby</button>
-                <button type="button" class="lobby-mode-btn" data-mode="join" aria-pressed="false">Join lobby</button>
-            </div>
-            <div class="join-code-field hidden"><label for="hostCode">Host lobby code</label><input id="hostCode" type="text" maxlength="64" autocomplete="off" placeholder="Paste the host code" /></div>
-            <p class="error" role="alert"></p><button type="submit" class="primary-btn wide-btn">Continue</button>
-        </form>
-    </div>`;
+    gameCard.innerHTML = "";
+    gameCard.appendChild(cloneTemplate("startTemplate"));
     const form = gameCard.querySelector(".start-form");
     const modeButtons = [...gameCard.querySelectorAll(".lobby-mode-btn")];
     const joinField = gameCard.querySelector(".join-code-field");
     const nickname = gameCard.querySelector("#startNickname");
     const error = gameCard.querySelector(".error");
+    nickname.maxLength = MAX_NICKNAME_LENGTH;
     nickname.value = getNicknameCookie();
     const savedLobby = getLobbyCookie();
     if (savedLobby) {
