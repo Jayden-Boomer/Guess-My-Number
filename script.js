@@ -131,20 +131,23 @@ function renderStart() {
     nickname.value = getNicknameCookie();
     const savedLobby = getLobbyCookie();
     if (savedLobby) {
-        const rejoinSeparator = document.createElement("div");
-        rejoinSeparator.className = "rejoin-separator";
-        rejoinSeparator.textContent = "or";
-        const rejoinButton = document.createElement("button");
-        rejoinButton.type = "button";
-        rejoinButton.className = "ghost-btn wide-btn rejoin-btn";
-        rejoinButton.textContent = `Rejoin ${savedLobby.rejoinName || savedLobby.nickname}'s lobby`;
-        joinField.after(rejoinSeparator, rejoinButton);
-        rejoinButton.addEventListener("click", () => {
-            nickname.value = savedLobby.nickname;
-            game.nickname = savedLobby.nickname;
-            modeButtons.find(button => button.dataset.mode === "join").click();
-            gameCard.querySelector("#hostCode").value = savedLobby.lobbyCode;
-            startJoining(savedLobby.lobbyCode, error);
+        checkLobbyAvailability(savedLobby.lobbyCode).then(availability => {
+            if (!availability || !form.isConnected) return;
+            const rejoinSeparator = document.createElement("div");
+            rejoinSeparator.className = "rejoin-separator";
+            rejoinSeparator.textContent = "or";
+            const rejoinButton = document.createElement("button");
+            rejoinButton.type = "button";
+            rejoinButton.className = "ghost-btn wide-btn rejoin-btn";
+            rejoinButton.textContent = `Rejoin ${availability.name || savedLobby.rejoinName || savedLobby.nickname}'s lobby`;
+            joinField.after(rejoinSeparator, rejoinButton);
+            rejoinButton.addEventListener("click", () => {
+                nickname.value = savedLobby.nickname;
+                game.nickname = savedLobby.nickname;
+                modeButtons.find(button => button.dataset.mode === "join").click();
+                gameCard.querySelector("#hostCode").value = savedLobby.lobbyCode;
+                startJoining(savedLobby.lobbyCode, error);
+            });
         });
     }
     let selectedMode = "host";

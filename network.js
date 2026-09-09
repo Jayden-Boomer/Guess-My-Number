@@ -50,6 +50,35 @@ function getLobbyCookie() {
     } catch { return null; }
 }
 function clearLobbyCookie() { document.cookie = `${LOBBY_COOKIE}=; Max-Age=0; Path=/; SameSite=Lax`; }
+function checkLobbyAvailability(lobbyCode) {
+    if (!lobbyCode || typeof Peer === "undefined") return Promise.resolve(null);
+    return new Promise(resolve => {
+        let peer;
+        let finished = false;
+        const finish = result => {
+            if (finished) return;
+            finished = true;
+            clearTimeout(timer);
+            if (peer && !peer.destroyed) peer.destroy();
+            resolve(result);
+        };
+        const timer = setTimeout(() => finish(null), 8000);
+        try {
+            peer = new Peer(peerOptions());
+            peer.on("error", () => finish(null));
+            peer.on("disconnected", () => finish(null));
+            peer.on("open", () => {
+                if (finished) return;
+                const connection = peer.connect(lobbyCode, { metadata: { lobbyAvailabilityCheck: true } });
+                connection.on("data", message => {
+                    if (message?.type === "lobby-availability") finish(message.joinable === true ? message : null);
+                });
+                connection.on("error", () => finish(null));
+                connection.on("close", () => finish(null));
+            });
+        } catch { finish(null); }
+    });
+}
 function send(message) {
     setLobbyCookie(network.hostCode || (network.peer && network.peer.id));
     if (network.connection && network.connection.open) network.connection.send(message);
@@ -115,6 +144,15 @@ function startHosting(resumingMatch = false, lobbyCode = null) {
         if (resumingMatch && game.phase !== "lobby") renderNetworkState();
     });
     network.peer.on("connection", connection => {
+        if (connection.metadata?.lobbyAvailabilityCheck === true) {
+            connection.on("error", () => {});
+            connection.on("open", () => connection.send({
+                type: "lobby-availability",
+                joinable: !network.connection,
+                name: game.nickname
+            }));
+            return;
+        }
         if (network.connection && network.connection !== connection) network.connection.close();
         network.connection = connection;
         connection.on("open", () => {
