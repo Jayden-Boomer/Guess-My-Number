@@ -14,7 +14,7 @@ const network = {
 };
 
 const LOBBY_COOKIE = "hidden-number-duel-lobby";
-const LOBBY_COOKIE_MAX_AGE = 120;
+const LOBBY_COOKIE_MAX_AGE = 86400; // 1 day 
 
 const DEFAULT_ICE_SERVERS = [{ urls: "stun:stun.l.google.com:19302" }];
 
@@ -145,7 +145,7 @@ function startHosting(resumingMatch = false, lobbyCode = null) {
     });
     network.peer.on("connection", connection => {
         if (connection.metadata?.lobbyAvailabilityCheck === true) {
-            connection.on("error", () => {});
+            connection.on("error", () => { });
             connection.on("open", () => connection.send({
                 type: "lobby-availability",
                 joinable: !network.connection,
