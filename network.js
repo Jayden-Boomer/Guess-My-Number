@@ -248,7 +248,9 @@ function handleGuestMessage(message) {
     } else if (message.type === "game-start") {
         game.names = message.names; game.maxNumber = message.maxNumber; game.phase = "setup"; setLobbyCookie(network.hostCode, game.nickname); updateRangeDisplay(); renderSecretSetup();
     } else if (message.type === "state") {
+        const previousHistoryLength = game.history.length;
         Object.assign(game, message); updateRangeDisplay(); renderNetworkState();
+        if (game.history.length > previousHistoryLength) notifyOpponentGuess(game.history[game.history.length - 1]);
     } else if (message.type === "rematch") {
         resetGuestForRematch();
     }

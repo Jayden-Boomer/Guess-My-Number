@@ -87,6 +87,11 @@ function showLobbyJoinNotification(playerNameText, customMessage = null) {
 function setNicknameCookie(nickname) {
     if (nickname) document.cookie = `${NICKNAME_COOKIE}=${encodeURIComponent(nickname)}; Max-Age=${NICKNAME_COOKIE_MAX_AGE}; Path=/; SameSite=Lax`;
 }
+function notifyOpponentGuess(item) {
+    if (item && item.type === "guess" && item.player !== localPlayer()) {
+        showLobbyJoinNotification(playerName(item.player), `${playerName(item.player)} guessed ${item.guess}`);
+    }
+}
 function getNicknameCookie() {
     const cookie = document.cookie.split("; ").find(value => value.startsWith(`${NICKNAME_COOKIE}=`));
     if (!cookie) return "";
@@ -320,8 +325,13 @@ function renderNetworkState() {
     }
     if (game.currentPlayer === localPlayer()) renderTurn();
     else {
-        const latestAnswer = [...game.history].reverse().find(item => item.type === "question");
-        if (latestAnswer && latestAnswer.answerer === game.currentPlayer) {
+        const latestAnswer = game.history[game.history.length - 1];
+        if (latestAnswer && latestAnswer.type === "guess" && latestAnswer.player === localPlayer() && !latestAnswer.correct) {
+            renderWaiting(
+                `You guessed ${latestAnswer.guess}`,
+                `Your guess was incorrect. Waiting for ${playerName(game.currentPlayer)} to ask a question or make a guess.`
+            );
+        } else if (latestAnswer && latestAnswer.type === "question" && latestAnswer.answerer === game.currentPlayer) {
             renderWaiting(
                 `You asked: “${latestAnswer.question}”`,
                 `${playerName(latestAnswer.answerer)} answered: “${latestAnswer.answer}.”\nWaiting for ${playerName(latestAnswer.answerer)}'s next question.`
@@ -350,6 +360,7 @@ function processAction(action, player) {
     } else if (action.type === "guess") {
         const correct = action.guess === game.secrets[opponentOf(player)];
         game.history.push({ type: "guess", player, guess: action.guess, correct });
+        notifyOpponentGuess(game.history[game.history.length - 1]);
         if (correct) { game.phase = "finished"; game.winner = player; game.winningGuess = action.guess; } else game.currentPlayer = opponentOf(player);
     } else return;
     broadcastState(); renderNetworkState();
