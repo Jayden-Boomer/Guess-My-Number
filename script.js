@@ -23,6 +23,8 @@ const game = {
 const gameCard = document.getElementById("gameCard");
 const rulesDialog = document.getElementById("rulesDialog");
 const handoffDialog = document.getElementById("handoffDialog");
+const handoffCloseButton = document.querySelector(".close-handoff-dialog");
+let handoffDialogManualCloseAllowed = false;
 const numberWords = new Set([
     "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten",
     "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen",
@@ -92,8 +94,15 @@ function getNicknameCookie() {
         return decodeURIComponent(cookie.slice(NICKNAME_COOKIE.length + 1)).slice(0, MAX_NICKNAME_LENGTH);
     } catch { return ""; }
 }
-function showHandoffDialog(copy) {
+function showHandoffDialog(copy, allowManualClose = false) {
+    handoffDialogManualCloseAllowed = allowManualClose;
+    const closeButton = handoffCloseButton || document.querySelector(".close-handoff-dialog");
     handoffDialog.querySelector(".handoff-copy").textContent = copy;
+    if (closeButton) {
+        closeButton.hidden = !allowManualClose;
+        closeButton.disabled = !allowManualClose;
+        closeButton.setAttribute("aria-hidden", String(!allowManualClose));
+    }
     if (!handoffDialog.open) handoffDialog.showModal();
 }
 function renderStart() {
@@ -448,6 +457,33 @@ function resetGame() {
 }
 document.querySelector(".close-dialog").addEventListener("click", () => rulesDialog.close());
 rulesDialog.addEventListener("click", event => { if (event.target === rulesDialog) rulesDialog.close(); });
-document.querySelector(".close-handoff-dialog").addEventListener("click", () => handoffDialog.close());
-handoffDialog.addEventListener("click", event => { if (event.target === handoffDialog) handoffDialog.close(); });
+if (handoffCloseButton) {
+    handoffCloseButton.addEventListener("click", event => {
+        event.preventDefault();
+        event.stopPropagation();
+        if (!handoffDialogManualCloseAllowed) {
+            if (handoffDialog.open) handoffDialog.showModal();
+            return;
+        }
+        handoffDialog.close();
+    });
+}
+handoffDialog.addEventListener("click", event => {
+    if (event.target === handoffDialog) {
+        event.preventDefault();
+        if (!handoffDialogManualCloseAllowed) {
+            if (handoffDialog.open) handoffDialog.showModal();
+            return;
+        }
+        handoffDialog.close();
+    }
+});
+handoffDialog.addEventListener("cancel", event => {
+    event.preventDefault();
+    if (!handoffDialogManualCloseAllowed) {
+        if (handoffDialog.open) handoffDialog.showModal();
+        return;
+    }
+    handoffDialog.close();
+});
 renderStart();

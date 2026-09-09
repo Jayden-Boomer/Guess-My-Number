@@ -86,7 +86,7 @@ function promoteGuestToHost() {
     if (oldConnection) oldConnection.close();
     if (oldPeer && !oldPeer.destroyed) oldPeer.destroy();
     startHosting(true, previousHostCode);
-    showHandoffDialog("The host disconnected, so you are now the host. The match will resume when your opponent rejoins.");
+    showHandoffDialog("The host disconnected, so you are now the host. The match will resume when your opponent rejoins.", false);
 }
 function scheduleGuestReconnect() {
     if (network.reconnectTimer || game.role !== "guest") return;
@@ -191,7 +191,9 @@ function handleHostMessage(message) {
 }
 function handleGuestMessage(message) {
     if (message.type === "host-takeover") {
-        showHandoffDialog(`The previous host disconnected. ${message.name || "This player"} is now the host of this lobby.`);
+        const title = document.querySelector(".handoff-title");
+        if (title) title.textContent = "Reconnected to Lobby";
+        showHandoffDialog(`You disconnected while hosting the lobby. ${message.name || "This player"} is now the host of this lobby.`, true);
     } else if (message.type === "lobby-info") {
         game.names[0] = String(message.name || "Host").trim().slice(0, MAX_NICKNAME_LENGTH);
         showLobbyJoinNotification(playerName(0), `you joined ${playerName(0)}'s lobby`);
