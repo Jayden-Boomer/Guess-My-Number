@@ -195,6 +195,7 @@ function renderLobby(role, errorMessage = "") {
         copyCodeButton.addEventListener("click", async () => {
             try {
                 await navigator.clipboard.writeText(code.textContent);
+                showLobbyJoinNotification(null, "Lobby code copied to your clipboard.");
                 copyCodeButton.setAttribute("aria-label", "Lobby code copied");
                 copyCodeButton.title = "Lobby code copied";
                 setTimeout(() => {
