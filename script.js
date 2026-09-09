@@ -3,6 +3,8 @@ const MAX_ENDPOINT = 1000;
 const MAX_NICKNAME_LENGTH = 24;
 const NICKNAME_COOKIE = "hidden-number-duel-nickname";
 const NICKNAME_COOKIE_MAX_AGE = 315360000;
+let lobbyToastTimer = null;
+let lobbyToastRemoveTimer = null;
 const game = {
     role: null,
     nickname: "",
@@ -56,6 +58,29 @@ function updateRangeDisplay() {
 function setStatus(message, isError = false) {
     const status = document.querySelector(".lobby-status");
     if (status) { status.textContent = message; status.classList.toggle("error", isError); }
+}
+function showLobbyJoinNotification(playerNameText, customMessage = null) {
+    const container = document.getElementById("toastContainer");
+    if (!container) return;
+
+    if (lobbyToastTimer) window.clearTimeout(lobbyToastTimer);
+    if (lobbyToastRemoveTimer) window.clearTimeout(lobbyToastRemoveTimer);
+    container.innerHTML = "";
+
+    const toast = document.createElement("div");
+    toast.className = "lobby-toast";
+    toast.textContent = customMessage || `${playerNameText} joined the lobby`;
+    container.appendChild(toast);
+
+    window.setTimeout(() => toast.classList.add("visible"), 20);
+    lobbyToastTimer = window.setTimeout(() => {
+        toast.classList.remove("visible");
+        lobbyToastRemoveTimer = window.setTimeout(() => {
+            container.innerHTML = "";
+            lobbyToastTimer = null;
+            lobbyToastRemoveTimer = null;
+        }, 220);
+    }, 2600);
 }
 function setNicknameCookie(nickname) {
     if (nickname) document.cookie = `${NICKNAME_COOKIE}=${encodeURIComponent(nickname)}; Max-Age=${NICKNAME_COOKIE_MAX_AGE}; Path=/; SameSite=Lax`;

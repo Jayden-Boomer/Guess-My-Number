@@ -169,6 +169,7 @@ function handleHostMessage(message) {
         setLobbyCookie(network.hostCode || (network.peer && network.peer.id));
         const submit = document.querySelector(".lobby-submit");
         if (submit) { submit.disabled = false; submit.textContent = "Start duel"; }
+        if (message.type === "join") showLobbyJoinNotification(playerName(1));
         setStatus(`${playerName(1)} joined. Set the range when you are ready.`);
         if (message.type === "join" && network.takeoverHost && handoffDialog.open) handoffDialog.close();
         if (message.type === "join" && game.phase !== "lobby") {
@@ -193,6 +194,7 @@ function handleGuestMessage(message) {
         showHandoffDialog(`The previous host disconnected. ${message.name || "This player"} is now the host of this lobby.`);
     } else if (message.type === "lobby-info") {
         game.names[0] = String(message.name || "Host").trim().slice(0, MAX_NICKNAME_LENGTH);
+        showLobbyJoinNotification(playerName(0), `you joined ${playerName(0)}'s lobby`);
         const title = document.querySelector(".lobby-title");
         const copy = document.querySelector(".lobby-copy");
         if (title) title.textContent = "Lobby joined";

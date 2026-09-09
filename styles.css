@@ -56,6 +56,59 @@ body {
 		var(--bg);
 }
 
+.toast-container {
+	position: fixed;
+	top: 18px;
+	left: 50%;
+	z-index: 1000;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 10px;
+	transform: translateX(-50%);
+	pointer-events: none;
+}
+
+.lobby-toast {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 48px;
+	max-width: min(90vw, 420px);
+	padding: 12px 18px;
+	border: 1px solid rgb(from var(--accent-theme-color) r g b / 42%);
+	border-radius: 999px;
+	background: linear-gradient(
+		135deg,
+		rgb(from var(--theme-color) r g b / 26%),
+		rgb(from var(--accent-theme-color) r g b / 12%)
+	);
+	backdrop-filter: blur(8px);
+	box-shadow:
+		0 18px 36px rgba(0, 0, 0, 0.28),
+		0 0 0 1px rgb(from var(--white) r g b / 3%);
+	color: var(--text);
+	font-size: 0.92rem;
+	font-weight: 800;
+	letter-spacing: 0.02em;
+	line-height: 1.2;
+	opacity: 0;
+	transform: translateY(-16px);
+	transition:
+		opacity 0.24s ease,
+		transform 0.24s ease;
+}
+
+.lobby-toast.visible {
+	opacity: 1;
+	transform: translateY(0);
+}
+
+.lobby-toast:not(.visible) {
+	opacity: 0;
+	transform: translateY(-18px);
+}
+
 button,
 input,
 textarea,
