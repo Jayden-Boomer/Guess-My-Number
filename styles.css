@@ -234,7 +234,7 @@ h1 {
 
 label {
 	display: block;
-	margin-bottom: 9px;
+	margin: 22px 0 9px;
 	color: var(--text);
 	font-size: 0.91rem;
 	font-weight: 700;
