@@ -364,14 +364,6 @@ select:focus {
 	color: var(--text);
 }
 
-.lobby-mode-label {
-	display: block;
-	margin: 22px 0 9px;
-	color: var(--text);
-	font-size: 0.91rem;
-	font-weight: 700;
-}
-
 .lobby-mode-buttons {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
