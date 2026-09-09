@@ -431,6 +431,11 @@ function handleGuestMessage(message) {
 }
 
 function renderSecretSetup() {
+    const currentInput = document.querySelector("#secretInput");
+    const currentError = document.querySelector(".error");
+    const preservedValue = currentInput ? currentInput.value : "";
+    const preservedError = currentError ? currentError.textContent : "";
+
     document.querySelector(".range-pill").classList.remove("hidden"); gameCard.innerHTML = "";
     const view = cloneTemplate("setupTemplate");
     view.querySelector(".step-badge").textContent = "Secret number";
@@ -457,12 +462,17 @@ function renderSecretSetup() {
     if (Number.isInteger(savedSecret) && savedSecret >= 1 && savedSecret <= game.maxNumber) {
         input.value = savedSecret;
         game.secrets[localPlayer()] = savedSecret;
+    } else if (game.secrets[localPlayer()] === null && preservedValue.trim() !== "") {
+        input.value = preservedValue;
+        if (preservedError) error.textContent = preservedError;
     }
     gameCard.appendChild(view); setTimeout(() => input.focus(), 0);
 }
 function maybeStartGame() {
     if (game.secrets[0] === null || game.secrets[1] === null) {
         if (game.role === "host" && game.secrets[0] === null) {
+            const currentInput = document.querySelector("#secretInput");
+            if (currentInput) return;
             renderSecretSetup();
             return;
         }
