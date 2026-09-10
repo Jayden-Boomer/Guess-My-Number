@@ -284,6 +284,12 @@ select:focus {
 	gap: 10px;
 }
 
+.guess-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
 .guess-slider-row {
 	display: grid;
 	grid-template-columns: 1fr auto;
@@ -353,7 +359,7 @@ select:focus {
 	position: absolute;
 	bottom: 100%;
 	left: 50%;
-	width: 1px;
+	width: 2px;
 	height: calc(var(--marker-label-offset, 14px) - 9px);
 	transform: translateX(-50%);
 	background: currentColor;
@@ -478,7 +484,7 @@ select:focus {
 
 .guess-value-input {
 	min-width: 64px;
-	height: 52px;
+	height: 45px;
 	padding: 0 8px;
 	border: 1px solid rgb(from var(--accent-theme-color) r g b / 35%);
 	border-radius: 13px;
@@ -767,10 +773,53 @@ select:focus {
 }
 
 .mode-panel {
-	padding: 22px;
+	padding: 5px 22px 22px;
 	border: 1px solid var(--line);
 	border-radius: 18px;
 	background: var(--surface-panel);
+}
+
+.mode-panel label {
+	margin: 22px 0px;
+}
+
+.guess-settings-btn {
+	display: grid;
+	place-items: center;
+	margin-left: auto;
+}
+
+.guess-settings-btn svg {
+	width: 20px;
+	height: 20px;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 1.8;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+
+.settings-options {
+	display: grid;
+	gap: 18px;
+	margin-top: 24px;
+}
+
+.settings-options label {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin: 0;
+	cursor: pointer;
+}
+
+.settings-options input[type="checkbox"] {
+	width: 18px;
+	height: 18px;
+	flex-shrink: 0;
+	margin: 0;
+	padding: 0;
+	accent-color: var(--theme-color);
 }
 
 .hidden {

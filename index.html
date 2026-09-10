@@ -186,14 +186,26 @@
 
             <div class="mode-panel guess-panel hidden">
                 <form class="guess-form">
-                    <label for="guessInput">Your guess</label>
+                    <div class="guess-header">
+                        <label for="guessInput">Your guess</label>
+                        <button class="icon-btn guess-settings-btn" type="button" aria-haspopup="dialog"
+                            aria-controls="numlineSettingsDialog" aria-label="Settings" title="Numberline Settings">
+                            <svg aria-hidden="true" viewBox="0 0 24 24" focusable="false">
+                                <path
+                                    d="m9.5 3-.5 2.5-2 1.2-2.4-.8-2.5 4.2L4 11.8v2.4l-1.9 1.7 2.5 4.2 2.4-.8 2 1.2.5 2.5h5l.5-2.5 2-1.2 2.4.8 2.5-4.2-1.9-1.7v-2.4l1.9-1.7-2.5-4.2-2.4.8-2-1.2-.5-2.5Z"
+                                    transform="translate(0 -1)"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        </button>
+                    </div>
                     <div class="guess-slider-row">
                         <div class="guess-slider-track">
-                            <input id="guessInput" class="guess-slider" type="range" min="1" value="1" aria-describedby="guessError" />
+                            <input id="guessInput" class="guess-slider" type="range" min="1" value="1"
+                                aria-describedby="guessError" />
                             <div class="guess-markers" aria-hidden="true"></div>
                         </div>
-                        <input id="guessValue" class="guess-value-input" type="number" min="1"
-                            inputmode="numeric" aria-label="Selected guess" aria-describedby="guessError" />
+                        <input id="guessValue" class="guess-value-input" type="number" min="1" inputmode="numeric"
+                            aria-label="Selected guess" aria-describedby="guessError" />
                     </div>
                     <div class="number-row">
                         <button class="primary-btn" type="submit">Submit guess</button>
@@ -250,6 +262,21 @@
         </div>
     </template>
 
+    <dialog id="numlineSettingsDialog" aria-labelledby="settingsTitle">
+        <div class="dialog-inner">
+            <div class="dialog-header">
+                <h2 id="numlineSettingsTitle">Numberline Settings</h2>
+                <button class="icon-btn close-settings-dialog" type="button"
+                    aria-label="Close settings">&times;</button>
+            </div>
+            <div class="settings-options">
+                <label><input type="checkbox" /> Show incorrect guesses</label>
+                <label><input type="checkbox" /> Show notes</label>
+                <label><input type="checkbox" /> Numberline compression</label>
+            </div>
+        </div>
+    </dialog>
+
     <dialog id="rulesDialog">
         <div class="dialog-inner">
             <div class="dialog-header">
@@ -263,7 +290,8 @@
                 <li>Questions may be open-ended, but cannot contain digits or number words.</li>
                 <li>The opponent answers the question, then the turn switches.</li>
                 <li>A wrong number guess also ends the turn.</li>
-                <li>After a correct guess, the opponent gets one final guess to tie the game. If they miss, the first correct guess wins.</li>
+                <li>After a correct guess, the opponent gets one final guess to tie the game. If they miss, the first
+                    correct guess wins.</li>
             </ol>
         </div>
     </dialog>

@@ -24,6 +24,7 @@ const game = {
 
 const gameCard = document.getElementById("gameCard");
 const rulesDialog = document.getElementById("rulesDialog");
+const numberlineSettingsDialog = document.getElementById("numlineSettingsDialog");
 const handoffDialog = document.getElementById("handoffDialog");
 const handoffCloseButton = document.querySelector(".close-handoff-dialog");
 let handoffDialogManualCloseAllowed = false;
@@ -480,6 +481,7 @@ function renderTurn() {
     gameCard.innerHTML = ""; const view = cloneTemplate("turnTemplate");
     view.querySelector(".turn-label").textContent = `${playerName(game.currentPlayer)}'s turn • trying to find ${playerName(opponentOf(game.currentPlayer))}'s number`;
     const tabs = [...view.querySelectorAll(".mode-tab")]; const questionPanel = view.querySelector(".question-panel"); const guessPanel = view.querySelector(".guess-panel");
+    view.querySelector(".guess-settings-btn").addEventListener("click", () => numberlineSettingsDialog.showModal());
     tabs.forEach(tab => tab.addEventListener("click", () => { tabs.forEach(item => item.classList.toggle("active", item === tab)); const isQuestion = tab.dataset.mode === "question"; questionPanel.classList.toggle("hidden", !isQuestion); guessPanel.classList.toggle("hidden", isQuestion); if (!isQuestion) guessValue.focus(); }));
     const questionInput = view.querySelector("#questionInput"); const questionError = view.querySelector(".question-error");
     const charCount = view.querySelector(".char-count");
@@ -522,15 +524,14 @@ function renderTurn() {
         const labels = [...markers.querySelectorAll(".guess-marker-value")]
             .map(label => ({ label, bounds: label.getBoundingClientRect() }))
             .sort((a, b) => a.bounds.left - b.bounds.left);
-        const rowEnds = [];
-        const rowHeight = Math.max(16, ...labels.map(({ bounds }) => bounds.height)) + 10;
+        let previousRight = -Infinity;
+        let row = 0;
+        const rowHeight = Math.max(16, ...labels.map(({ bounds }) => bounds.height)) + 2;
         labels.forEach(({ label, bounds }) => {
-            let row = rowEnds.findIndex(end => bounds.left >= end + 12);
-            if (row === -1) row = rowEnds.length;
-            rowEnds[row] = bounds.right;
-            label.style.setProperty("--marker-label-offset", `${20 + rowHeight * row}px`);
+            row = bounds.left < previousRight + 12 ? 1 - row : 0;
+            previousRight = bounds.right;
+            label.style.setProperty("--marker-label-offset", `${14 + rowHeight * row}px`);
         });
-        guessPanel.querySelector(".guess-slider-row").style.setProperty("--marker-label-space", `${20 + rowEnds.length * rowHeight}px`);
     }
     const markerResizeObserver = new ResizeObserver(() => {
         if (!markers.isConnected) {
@@ -807,6 +808,12 @@ function resetGame() {
     game.role = null; game.nickname = ""; game.secrets = [null, null]; game.names = [null, null]; game.currentPlayer = 0; game.maxNumber = DEFAULT_MAX_NUMBER; game.history = []; game.pendingQuestion = null; game.questionDraft = ""; game.phase = "lobby"; game.winner = null; game.winningGuess = null; renderStart();
 }
 document.querySelector(".close-dialog").addEventListener("click", () => rulesDialog.close());
+document.querySelector(".close-settings-dialog").addEventListener("click", () => numberlineSettingsDialog.close());
+numberlineSettingsDialog.addEventListener("click", event => {
+    if (event.target !== numberlineSettingsDialog) return;
+    const bounds = numberlineSettingsDialog.getBoundingClientRect();
+    if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) numberlineSettingsDialog.close();
+});
 rulesDialog.addEventListener("click", event => { if (event.target === rulesDialog) rulesDialog.close(); });
 if (handoffCloseButton) {
     handoffCloseButton.addEventListener("click", event => {
