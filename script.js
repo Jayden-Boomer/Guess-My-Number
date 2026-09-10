@@ -5,6 +5,7 @@ const NICKNAME_COOKIE = "hidden-number-duel-nickname";
 const NICKNAME_COOKIE_MAX_AGE = 315360000;
 let lobbyToastTimer = null;
 let lobbyToastRemoveTimer = null;
+const answerNotes = new Map();
 const game = {
     role: null,
     nickname: "",
@@ -467,7 +468,7 @@ function renderHistoryInto(view, includePending = false) {
         entry.querySelector("p").textContent = `“${game.pendingQuestion.question}”`;
         list.appendChild(entry);
     }
-    [...game.history].reverse().forEach(item => {
+    [...game.history].reverse().forEach((item, reverseIndex) => {
         const entry = document.createElement("div"); entry.className = "history-item";
         if (item.type === "question") {
             const isOwnQuestion = item.asker === localPlayer();
@@ -475,6 +476,84 @@ function renderHistoryInto(view, includePending = false) {
             entry.innerHTML = `<div class="history-meta">${isOwnQuestion ? "You" : playerName(item.asker)} asked</div><p></p><p class="answer"></p>`;
             entry.querySelector("p").textContent = `“${item.question}”`;
             entry.querySelector(".answer").textContent = `${playerName(item.answerer)}: ${item.answer}`;
+            if (isOwnQuestion) {
+                entry.classList.add("has-answer-note");
+                const historyIndex = game.history.length - 1 - reverseIndex;
+                const note = answerNotes.get(historyIndex) || { value: Math.ceil(game.maxNumber / 2), direction: null, expanded: false };
+                const directions = [
+                    { value: "above", symbol: "⬆", label: "Above" },
+                    { value: "below", symbol: "⬇", label: "Below" },
+                    { value: "around", symbol: "⬌", label: "Around" }
+                ];
+                const button = document.createElement("button");
+                button.type = "button";
+                button.className = "ghost-btn answer-notes-button";
+                button.textContent = "Make a Note";
+                const panel = document.createElement("div");
+                panel.className = "answer-notes";
+                panel.id = `answer-notes-${historyIndex}`;
+                panel.hidden = !note.expanded;
+                button.setAttribute("aria-controls", panel.id);
+                button.setAttribute("aria-expanded", String(note.expanded));
+                const label = document.createElement("label");
+                label.htmlFor = `answer-note-input-${historyIndex}`;
+                label.textContent = "Opponent's number compared with: ";
+                const output = document.createElement("output");
+                output.htmlFor = label.htmlFor;
+                label.appendChild(output);
+                const input = document.createElement("input");
+                input.id = label.htmlFor;
+                input.type = "range";
+                input.className = "guess-slider answer-note-slider";
+                input.min = "1";
+                input.max = String(game.maxNumber);
+                input.step = "1";
+                input.value = note.value;
+                const choices = document.createElement("div");
+                choices.className = "answer-note-choices";
+                const updateNote = () => {
+                    output.value = String(note.value);
+                    const selected = directions.find(direction => direction.value === note.direction);
+                    button.textContent = selected ? `${note.value} ${selected.symbol}` : "Make a Note";
+                    button.dataset.direction = note.direction || "";
+                    button.setAttribute("aria-label", selected ? `Edit note: opponent's number is ${selected.value} ${note.value}` : "Make a Note");
+                    choices.querySelectorAll("button").forEach(choice => {
+                        choice.setAttribute("aria-pressed", String(choice.dataset.direction === note.direction));
+                    });
+                };
+                input.addEventListener("input", () => {
+                    note.value = Number(input.value);
+                    answerNotes.set(historyIndex, note);
+                    updateNote();
+                });
+                directions.forEach(direction => {
+                    const choice = document.createElement("button");
+                    choice.type = "button";
+                    choice.className = "ghost-btn answer-note-choice";
+                    choice.dataset.direction = direction.value;
+                    choice.textContent = `${direction.symbol} ${direction.label}`;
+                    choice.addEventListener("click", () => {
+                        note.direction = direction.value;
+                        note.expanded = false;
+                        answerNotes.set(historyIndex, note);
+                        updateNote();
+                        panel.hidden = true;
+                        button.setAttribute("aria-expanded", "false");
+                        button.focus();
+                    });
+                    choices.appendChild(choice);
+                });
+                button.addEventListener("click", () => {
+                    note.expanded = !note.expanded;
+                    answerNotes.set(historyIndex, note);
+                    panel.hidden = !note.expanded;
+                    button.setAttribute("aria-expanded", String(note.expanded));
+                    if (note.expanded) input.focus();
+                });
+                updateNote();
+                panel.append(label, input, choices);
+                entry.append(button, panel);
+            }
         }
         else {
             const isOwnGuess = item.player === localPlayer();
@@ -495,6 +574,7 @@ function renderWinner(winner, winningGuess) {
     gameCard.appendChild(view);
 }
 function resetForRematch() {
+    answerNotes.clear();
     const opponentName = game.names[1];
     game.secrets = [null, null]; game.names = [game.nickname, opponentName]; game.currentPlayer = 0;
     game.maxNumber = DEFAULT_MAX_NUMBER; game.history = []; game.pendingQuestion = null;
@@ -502,6 +582,7 @@ function resetForRematch() {
     send({ type: "rematch" }); renderLobby("host");
 }
 function resetGuestForRematch() {
+    answerNotes.clear();
     game.secrets = [null, null]; game.names[1] = game.nickname; game.currentPlayer = 0;
     game.maxNumber = DEFAULT_MAX_NUMBER; game.history = []; game.pendingQuestion = null;
     game.questionDraft = ""; game.phase = "lobby"; game.winner = null; game.winningGuess = null;
@@ -512,6 +593,7 @@ function startRematch() {
     else { send({ type: "rematch-request" }); renderWaiting("Rematch requested", "Waiting for the host to open a new game."); }
 }
 function resetGame() {
+    answerNotes.clear();
     disconnectNetwork();
     game.role = null; game.nickname = ""; game.secrets = [null, null]; game.names = [null, null]; game.currentPlayer = 0; game.maxNumber = DEFAULT_MAX_NUMBER; game.history = []; game.pendingQuestion = null; game.questionDraft = ""; game.phase = "lobby"; game.winner = null; game.winningGuess = null; renderStart();
 }

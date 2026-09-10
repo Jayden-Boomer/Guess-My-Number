@@ -735,6 +735,65 @@ select:focus {
 	color: var(--muted);
 }
 
+.history-item.has-answer-note {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	column-gap: 16px;
+}
+
+.has-answer-note > .history-meta,
+.has-answer-note > p {
+	grid-column: 1;
+	overflow-wrap: anywhere;
+}
+
+.answer-notes-button {
+	grid-column: 2;
+	grid-row: 1 / 4;
+	align-self: start;
+	justify-self: end;
+	margin: 0;
+	padding: 6px 12px;
+	font-size: 0.8rem;
+}
+
+.answer-notes {
+	grid-column: 1 / -1;
+	margin-top: 12px;
+}
+
+.answer-notes label {
+	margin-top: 0;
+	font-size: 0.8rem;
+}
+
+.answer-note-choices {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-top: 10px;
+}
+
+.answer-notes-button[data-direction="above"],
+.answer-note-choice[data-direction="above"] {
+	color: #65df97;
+}
+
+.answer-notes-button[data-direction="below"],
+.answer-note-choice[data-direction="below"] {
+	color: #ff8585;
+}
+
+.answer-notes-button[data-direction="around"],
+.answer-note-choice[data-direction="around"] {
+	color: #f5d76e;
+}
+
+.answer-note-choice[aria-pressed="true"] {
+	border-color: currentColor;
+	box-shadow: inset 0 0 0 1px currentColor;
+}
+
 .question-quote {
 	position: relative;
 	margin: 28px 0;
