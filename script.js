@@ -113,6 +113,7 @@ function showHandoffDialog(copy, allowManualClose = false) {
     if (!handoffDialog.open) handoffDialog.showModal();
 }
 function renderStart() {
+    gameCard.closest(".app-shell").classList.remove("is-playing");
     document.querySelector(".range-pill").classList.add("hidden");
     gameCard.innerHTML = "";
     gameCard.appendChild(cloneTemplate("startTemplate"));
@@ -172,6 +173,7 @@ function renderStart() {
 }
 
 function renderLobby(role, errorMessage = "") {
+    gameCard.closest(".app-shell").classList.remove("is-playing");
     document.querySelector(".range-pill").classList.add("hidden");
     gameCard.innerHTML = "";
     const view = cloneTemplate("lobbyTemplate");
@@ -263,6 +265,7 @@ function renderLobby(role, errorMessage = "") {
 }
 
 function renderSecretSetup() {
+    gameCard.closest(".app-shell").classList.remove("is-playing");
     const currentInput = document.querySelector("#secretInput");
     const currentError = document.querySelector(".error");
     const preservedValue = currentInput ? currentInput.value : "";
@@ -319,6 +322,7 @@ function renderWaiting(title, copy) {
     gameCard.appendChild(view);
 }
 function renderNetworkState() {
+    gameCard.closest(".app-shell").classList.toggle("is-playing", game.phase === "turn" || game.phase === "finished");
     if (game.phase === "setup") return renderSecretSetup();
     if (game.phase === "finished") return renderWinner(game.winner, game.winningGuess);
     if (game.pendingQuestion) {

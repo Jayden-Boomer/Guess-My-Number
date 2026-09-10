@@ -121,9 +121,14 @@ button {
 }
 
 .app-shell {
-	width: min(980px, calc(100% - 32px));
+	--shell-width: 680px;
+	width: min(var(--shell-width), calc(100% - 32px));
 	margin: 0 auto;
 	padding: 44px 0 64px;
+}
+
+.app-shell.is-playing {
+	--shell-width: 980px;
 }
 
 .hero {
@@ -1004,7 +1009,7 @@ dialog ol {
 
 @media (max-width: 650px) {
 	.app-shell {
-		width: min(100% - 20px, 980px);
+		width: min(100% - 20px, var(--shell-width));
 		padding-top: 24px;
 	}
 	.hero {
