@@ -321,6 +321,37 @@ select:focus {
 	margin-top: 30px;
 }
 
+.guess-slider-row.has-marker-values {
+	margin-bottom: var(--marker-label-space, 36px);
+}
+
+.guess-marker-value {
+	position: absolute;
+	top: calc(50% + var(--marker-label-offset, 14px));
+	left: 50%;
+	transform: translateX(-50%);
+	color: var(--danger);
+	font-size: 12px;
+	font-weight: 700;
+	line-height: 16px;
+	white-space: nowrap;
+}
+
+.guess-marker-value::before {
+	content: "";
+	position: absolute;
+	bottom: 100%;
+	left: 50%;
+	width: 1px;
+	height: calc(var(--marker-label-offset, 14px) - 9px);
+	transform: translateX(-50%);
+	background: currentColor;
+}
+
+.guess-note-marker > .guess-marker-value {
+	color: var(--accent-theme-color);
+}
+
 .guess-note-marker {
 	position: absolute;
 	top: 50%;

@@ -513,6 +513,28 @@ function renderTurn() {
         guessError.textContent = missed ? "You already guessed this number incorrectly. Choose another number." : "";
         return !missed;
     }
+    function layoutMarkerValues() {
+        if (!markers.getBoundingClientRect().width) return;
+        const labels = [...markers.querySelectorAll(".guess-marker-value")]
+            .map(label => ({ label, bounds: label.getBoundingClientRect() }))
+            .sort((a, b) => a.bounds.left - b.bounds.left);
+        const rowEnds = [];
+        labels.forEach(({ label, bounds }) => {
+            let row = rowEnds.findIndex(end => bounds.left >= end + 6);
+            if (row === -1) row = rowEnds.length;
+            rowEnds[row] = bounds.right;
+            label.style.setProperty("--marker-label-offset", `${14 * (row + 1)}px`);
+        });
+        guessPanel.querySelector(".guess-slider-row").style.setProperty("--marker-label-space", `${18 + rowEnds.length * 18}px`);
+    }
+    const markerResizeObserver = new ResizeObserver(() => {
+        if (!markers.isConnected) {
+            markerResizeObserver.disconnect();
+            return;
+        }
+        layoutMarkerValues();
+    });
+    markerResizeObserver.observe(markers);
     function updateGuessMarkers() {
         markers.innerHTML = "";
         markers.removeAttribute("aria-hidden");
@@ -522,6 +544,10 @@ function renderTurn() {
             const marker = document.createElement("span");
             marker.className = "guess-marker";
             marker.style.left = position(guess);
+            const label = document.createElement("span");
+            label.className = "guess-marker-value";
+            label.textContent = guess;
+            marker.appendChild(label);
             markers.appendChild(marker);
         });
         const symbols = { above: "➡", below: "⬅", around: "⬌" };
@@ -575,12 +601,18 @@ function renderTurn() {
                 arrow.appendChild(symbol);
             });
             marker.appendChild(arrow);
+            const label = document.createElement("span");
+            label.className = "guess-marker-value";
+            label.textContent = value;
+            marker.appendChild(label);
             markers.appendChild(marker);
             descriptions.push([...directions.keys()].join(" and ") + " " + value);
         });
         guessInput.setAttribute("aria-description", descriptions.length ? "Notes: " + descriptions.join("; ") + "." : "No notes on the number line.");
         guessPanel.querySelector(".guess-slider-row").classList.toggle("has-note-markers", notesByValue.size > 0);
+        guessPanel.querySelector(".guess-slider-row").classList.toggle("has-marker-values", missedGuesses.size > 0 || notesByValue.size > 0);
         updateSelectedNoteMarkers();
+        layoutMarkerValues();
     }
     view.querySelector(".screen").addEventListener("answer-notes-change", updateGuessMarkers);
     if (game.winner !== null) {
