@@ -188,15 +188,18 @@
                 <form class="guess-form">
                     <label for="guessInput">Your guess</label>
                     <div class="guess-slider-row">
-                        <input id="guessInput" class="guess-slider" type="range" min="1" value="1" />
+                        <div class="guess-slider-track">
+                            <input id="guessInput" class="guess-slider" type="range" min="1" value="1" aria-describedby="guessError" />
+                            <div class="guess-markers" aria-hidden="true"></div>
+                        </div>
                         <input id="guessValue" class="guess-value-input" type="number" min="1" value="1"
-                            inputmode="numeric" aria-label="Selected guess" />
+                            inputmode="numeric" aria-label="Selected guess" aria-describedby="guessError" />
                     </div>
                     <div class="number-row">
                         <button class="primary-btn" type="submit">Submit guess</button>
                     </div>
                     <p class="hint">A wrong guess ends your turn.</p>
-                    <p class="error guess-error" role="alert"></p>
+                    <p id="guessError" class="error guess-error" role="alert"></p>
                 </form>
             </div>
 

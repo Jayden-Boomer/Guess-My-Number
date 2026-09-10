@@ -286,10 +286,35 @@ select:focus {
 	gap: 18px;
 }
 
+.guess-slider-track {
+	position: relative;
+	display: flex;
+	align-items: center;
+	min-width: 0;
+	height: 24px;
+}
+
+.guess-markers {
+	position: absolute;
+	inset: 0 12px;
+	pointer-events: none;
+}
+
+.guess-marker {
+	position: absolute;
+	top: 50%;
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: var(--danger);
+	transform: translate(-50%, -50%);
+}
+
 .guess-slider {
 	width: 100%;
 	height: 8px;
 	padding: 0;
+	margin: 0;
 	accent-color: var(--accent-theme-color);
 	background: var(--line);
 	border: 0;
@@ -320,6 +345,18 @@ select:focus {
 	box-shadow: 0 0 0 4px rgb(from var(--accent-theme-color) r g b / 16%);
 }
 
+.guess-slider[aria-invalid="true"]::-webkit-slider-thumb {
+	background: var(--danger);
+	border-color: var(--danger);
+	box-shadow: 0 0 0 4px rgb(from var(--danger) r g b / 16%);
+}
+
+.guess-slider[aria-invalid="true"]::-moz-range-thumb {
+	background: var(--danger);
+	border-color: var(--danger);
+	box-shadow: 0 0 0 4px rgb(from var(--danger) r g b / 16%);
+}
+
 .guess-value-input {
 	min-width: 64px;
 	height: 52px;
@@ -333,6 +370,21 @@ select:focus {
 	line-height: 50px;
 	text-align: center;
 	appearance: textfield;
+}
+
+.guess-value-input.incorrect-guess {
+	border-color: var(--danger);
+	background: rgb(from var(--danger) r g b / 12%);
+	color: var(--danger);
+	box-shadow: 0 0 0 4px rgb(from var(--danger) r g b / 13%);
+}
+
+.guess-form button:disabled {
+	background: var(--line);
+	color: var(--muted);
+	box-shadow: none;
+	cursor: not-allowed;
+	transform: none;
 }
 
 .guess-value-input::-webkit-inner-spin-button,

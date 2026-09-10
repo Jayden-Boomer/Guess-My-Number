@@ -365,6 +365,7 @@ function processAction(action, player) {
         game.history.push({ type: "question", ...game.pendingQuestion, answer: action.answer }); game.currentPlayer = player; game.pendingQuestion = null;
     } else if (action.type === "guess") {
         if (!Number.isInteger(action.guess) || action.guess < 1 || action.guess > game.maxNumber) return;
+        if (incorrectGuesses(player).has(action.guess)) return;
         const correct = action.guess === game.secrets[opponentOf(player)];
         game.history.push({ type: "guess", player, guess: action.guess, correct });
         notifyOpponentGuess(game.history[game.history.length - 1]);
@@ -377,6 +378,10 @@ function processAction(action, player) {
         }
     } else return;
     broadcastState(); renderNetworkState();
+}
+
+function incorrectGuesses(player) {
+    return new Set(game.history.filter(item => item.type === "guess" && item.player === player && !item.correct).map(item => item.guess));
 }
 
 function renderTurn() {
@@ -401,6 +406,24 @@ function renderTurn() {
         else { game.questionDraft = ""; submitAction({ type: "question", question }); }
     });
     const guessInput = view.querySelector("#guessInput"); const guessValue = view.querySelector("#guessValue"); const guessError = view.querySelector(".guess-error"); guessInput.max = game.maxNumber; guessValue.max = game.maxNumber;
+    const missedGuesses = incorrectGuesses(localPlayer());
+    const guessSubmit = view.querySelector(".guess-form button[type='submit']");
+    const markers = view.querySelector(".guess-markers");
+    missedGuesses.forEach(guess => {
+        const marker = document.createElement("span");
+        marker.className = "guess-marker";
+        marker.style.left = `${(guess - 1) / (game.maxNumber - 1) * 100}%`;
+        markers.appendChild(marker);
+    });
+    function updateGuessValidity() {
+        const missed = missedGuesses.has(Number(guessValue.value));
+        guessValue.classList.toggle("incorrect-guess", missed);
+        guessValue.setAttribute("aria-invalid", String(missed));
+        guessInput.setAttribute("aria-invalid", String(missed));
+        guessSubmit.disabled = missed;
+        guessError.textContent = missed ? "You already guessed this number incorrectly. Choose another number." : "";
+        return !missed;
+    }
     if (game.winner !== null) {
         view.querySelector(".screen-title").textContent = "Make your final guess";
         view.querySelector(".turn-label").textContent = `${playerName(game.winner)} guessed correctly. You have one final guess to tie!`;
@@ -408,13 +431,15 @@ function renderTurn() {
         view.querySelector(".mode-tabs").classList.add("hidden");
         view.querySelector(".guess-panel .hint").textContent = "Guess correctly to tie. A wrong guess ends the game.";
     }
-    guessInput.addEventListener("input", () => { guessValue.value = guessInput.value; });
+    guessInput.addEventListener("input", () => { guessValue.value = guessInput.value; updateGuessValidity(); });
     guessValue.addEventListener("input", () => {
         let value = Number(guessValue.value);
         if (value > game.maxNumber) { value = game.maxNumber; guessValue.value = value; }
         if (Number.isInteger(value) && value >= 1 && value <= game.maxNumber) guessInput.value = value;
+        updateGuessValidity();
     });
-    view.querySelector(".guess-form").addEventListener("submit", event => { event.preventDefault(); const guess = Number(guessValue.value); if (!Number.isInteger(guess) || guess < 1 || guess > game.maxNumber) guessError.textContent = `Enter a whole number from 1 to ${game.maxNumber}.`; else { guessInput.value = guess; submitAction({ type: "guess", guess }); } });
+    updateGuessValidity();
+    view.querySelector(".guess-form").addEventListener("submit", event => { event.preventDefault(); if (!updateGuessValidity()) return; const guess = Number(guessValue.value); if (!Number.isInteger(guess) || guess < 1 || guess > game.maxNumber) guessError.textContent = `Enter a whole number from 1 to ${game.maxNumber}.`; else { guessInput.value = guess; submitAction({ type: "guess", guess }); } });
     view.querySelector(".rules-btn").addEventListener("click", () => rulesDialog.showModal()); appendConversation(view); gameCard.appendChild(view); setTimeout(() => (game.winner !== null ? guessValue : questionInput).focus(), 0);
 }
 function renderAnswer() {
