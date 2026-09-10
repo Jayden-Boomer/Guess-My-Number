@@ -28,7 +28,7 @@ Rules implemented:
 - Answers can be open-ended.
 - After an answer, the answering player becomes the next asker.
 - An incorrect guess ends the player's turn.
-- A correct guess wins the game.
+- After a correct guess, the opponent gets one final guess to tie the game. A correct final guess results in a tie; an incorrect final guess confirms the original player's win.
 
 ## Code organization
 

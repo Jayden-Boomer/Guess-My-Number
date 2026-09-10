@@ -87,7 +87,8 @@ function publicState() {
     return {
         type: "state", names: game.names, maxNumber: game.maxNumber, currentPlayer: game.currentPlayer,
         history: game.history, pendingQuestion: game.pendingQuestion, phase: game.phase,
-        winner: game.winner, winningGuess: game.winningGuess
+        winner: game.winner, winningGuess: game.winningGuess,
+        ...(game.phase === "finished" ? { secrets: [...game.secrets] } : {})
     };
 }
 function broadcastState() { send(publicState()); }

@@ -325,6 +325,9 @@ function renderNetworkState() {
         return;
     }
     if (game.currentPlayer === localPlayer()) renderTurn();
+    else if (game.winner !== null) {
+        renderWaiting("You guessed correctly!", `${playerName(game.currentPlayer)} has one final guess to tie the game.`);
+    }
     else {
         const latestAnswer = game.history[game.history.length - 1];
         if (latestAnswer && latestAnswer.type === "guess" && latestAnswer.player === localPlayer() && !latestAnswer.correct) {
@@ -355,14 +358,23 @@ function submitAction(action) { if (game.role === "host") processAction(action, 
 function processAction(action, player) {
     const isAnswer = action.type === "answer" && game.pendingQuestion && game.pendingQuestion.answerer === player;
     if (game.phase !== "turn" || (game.currentPlayer !== player && !isAnswer)) return;
+    if (game.pendingQuestion && !isAnswer) return;
+    if (game.winner !== null && action.type !== "guess") return;
     if (action.type === "question") game.pendingQuestion = { asker: player, answerer: opponentOf(player), question: action.question };
     else if (action.type === "answer" && game.pendingQuestion && game.pendingQuestion.answerer === player) {
         game.history.push({ type: "question", ...game.pendingQuestion, answer: action.answer }); game.currentPlayer = player; game.pendingQuestion = null;
     } else if (action.type === "guess") {
+        if (!Number.isInteger(action.guess) || action.guess < 1 || action.guess > game.maxNumber) return;
         const correct = action.guess === game.secrets[opponentOf(player)];
         game.history.push({ type: "guess", player, guess: action.guess, correct });
         notifyOpponentGuess(game.history[game.history.length - 1]);
-        if (correct) { game.phase = "finished"; game.winner = player; game.winningGuess = action.guess; } else game.currentPlayer = opponentOf(player);
+        if (game.winner !== null) {
+            game.phase = "finished";
+            if (correct) { game.winner = null; game.winningGuess = null; }
+        } else {
+            if (correct) { game.winner = player; game.winningGuess = action.guess; }
+            game.currentPlayer = opponentOf(player);
+        }
     } else return;
     broadcastState(); renderNetworkState();
 }
@@ -389,6 +401,13 @@ function renderTurn() {
         else { game.questionDraft = ""; submitAction({ type: "question", question }); }
     });
     const guessInput = view.querySelector("#guessInput"); const guessValue = view.querySelector("#guessValue"); const guessError = view.querySelector(".guess-error"); guessInput.max = game.maxNumber; guessValue.max = game.maxNumber;
+    if (game.winner !== null) {
+        view.querySelector(".screen-title").textContent = "Make your final guess";
+        view.querySelector(".turn-label").textContent = `${playerName(game.winner)} guessed correctly. You have one final guess to tie!`;
+        tabs.find(tab => tab.dataset.mode === "guess").click();
+        view.querySelector(".mode-tabs").classList.add("hidden");
+        view.querySelector(".guess-panel .hint").textContent = "Guess correctly to tie. A wrong guess ends the game.";
+    }
     guessInput.addEventListener("input", () => { guessValue.value = guessInput.value; });
     guessValue.addEventListener("input", () => {
         let value = Number(guessValue.value);
@@ -396,7 +415,7 @@ function renderTurn() {
         if (Number.isInteger(value) && value >= 1 && value <= game.maxNumber) guessInput.value = value;
     });
     view.querySelector(".guess-form").addEventListener("submit", event => { event.preventDefault(); const guess = Number(guessValue.value); if (!Number.isInteger(guess) || guess < 1 || guess > game.maxNumber) guessError.textContent = `Enter a whole number from 1 to ${game.maxNumber}.`; else { guessInput.value = guess; submitAction({ type: "guess", guess }); } });
-    view.querySelector(".rules-btn").addEventListener("click", () => rulesDialog.showModal()); appendConversation(view); gameCard.appendChild(view); setTimeout(() => questionInput.focus(), 0);
+    view.querySelector(".rules-btn").addEventListener("click", () => rulesDialog.showModal()); appendConversation(view); gameCard.appendChild(view); setTimeout(() => (game.winner !== null ? guessValue : questionInput).focus(), 0);
 }
 function renderAnswer() {
     gameCard.innerHTML = ""; const view = cloneTemplate("answerTemplate"); const pending = game.pendingQuestion;
@@ -430,7 +449,8 @@ function renderHistoryInto(view, includePending = false) {
 }
 function renderWinner(winner, winningGuess) {
     gameCard.innerHTML = ""; const view = cloneTemplate("resultTemplate");
-    view.querySelector(".winner-title").textContent = `${playerName(winner)} wins!`; view.querySelector(".winner-copy").textContent = `${winningGuess} was the correct guess.`;
+    view.querySelector(".winner-title").textContent = winner === null ? "It's a tie!" : `${playerName(winner)} wins!`;
+    view.querySelector(".winner-copy").textContent = winner === null ? "Both players guessed the opponent's secret number correctly." : `${winningGuess} was the correct guess. The final guess did not tie the game.`;
     view.querySelector(".reveal-box").textContent = `Final numbers\n${playerName(0)} chose ${game.secrets[0] ?? "hidden"}\n${playerName(1)} chose ${game.secrets[1] ?? "hidden"}`;
     view.querySelector(".play-again-btn").addEventListener("click", startRematch);
     view.querySelector(".exit-lobby-btn").addEventListener("click", resetGame);
