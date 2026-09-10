@@ -692,7 +692,7 @@ select:focus {
 }
 
 .hint {
-	margin: 9px 0 0;
+	margin: 9px;
 }
 
 .error {

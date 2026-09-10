@@ -396,8 +396,8 @@ function createNumberLineScale(excludedNote = null) {
     answerNotes.forEach((note, index) => {
         const item = game.history[index];
         if (index === excludedNote || item?.type !== "question" || item.asker !== localPlayer()) return;
-        if (note.direction === "above") lower = Math.max(lower, note.value + 1);
-        if (note.direction === "below") upper = Math.min(upper, note.value - 1);
+        if (note.direction === "above") lower = Math.max(lower, note.value);
+        if (note.direction === "below") upper = Math.min(upper, note.value);
     });
     const conflict = lower > upper;
     if (conflict) { lower = 1; upper = max; }
@@ -421,7 +421,8 @@ function createNumberLineScale(excludedNote = null) {
     return {
         position: value => interpolate(value, values, positions),
         number: position => Math.round(interpolate(position, positions, values)),
-        left, right,
+        left: interpolate(lower, values, positions),
+        right: 1 - interpolate(upper, values, positions),
         description: conflict ? "Notes conflict; showing the full range evenly." :
             lower > 1 || upper < max ? `Notes suggest ${lower}–${upper}. Other numbers are compressed at the ends; all numbers remain selectable.` : ""
     };
@@ -450,7 +451,10 @@ function setupNumberLine(input, onInput, excludedNote = null) {
         setValue(selected);
         hint.textContent = scale.description;
         hint.hidden = !scale.description;
-        input.style.background = `linear-gradient(to right, var(--line) ${scale.left * 100}%, rgb(from var(--accent-theme-color) r g b / 20%) ${scale.left * 100}%, rgb(from var(--accent-theme-color) r g b / 30%) ${(1 - scale.right) * 100}%, var(--line) ${(1 - scale.right) * 100}%)`;
+        // Align interior bounds with markers; extend outer bounds to the track edges.
+        const start = scale.left === 0 ? "0%" : `calc(${scale.left * 100}% + ${12 - 24 * scale.left}px)`;
+        const end = scale.right === 0 ? "100%" : `calc(${(1 - scale.right) * 100}% + ${12 - 24 * (1 - scale.right)}px)`;
+        input.style.background = `linear-gradient(to right, var(--line) ${start}, rgb(from var(--accent-theme-color) r g b / 20%) ${start}, rgb(from var(--accent-theme-color) r g b / 30%) ${end}, var(--line) ${end})`;
     };
     input.addEventListener("input", () => {
         setValue(scale.number(Number(input.value) / 100000));
@@ -519,13 +523,14 @@ function renderTurn() {
             .map(label => ({ label, bounds: label.getBoundingClientRect() }))
             .sort((a, b) => a.bounds.left - b.bounds.left);
         const rowEnds = [];
+        const rowHeight = Math.max(16, ...labels.map(({ bounds }) => bounds.height)) + 10;
         labels.forEach(({ label, bounds }) => {
-            let row = rowEnds.findIndex(end => bounds.left >= end + 6);
+            let row = rowEnds.findIndex(end => bounds.left >= end + 12);
             if (row === -1) row = rowEnds.length;
             rowEnds[row] = bounds.right;
-            label.style.setProperty("--marker-label-offset", `${14 * (row + 1)}px`);
+            label.style.setProperty("--marker-label-offset", `${20 + rowHeight * row}px`);
         });
-        guessPanel.querySelector(".guess-slider-row").style.setProperty("--marker-label-space", `${18 + rowEnds.length * 18}px`);
+        guessPanel.querySelector(".guess-slider-row").style.setProperty("--marker-label-space", `${20 + rowEnds.length * rowHeight}px`);
     }
     const markerResizeObserver = new ResizeObserver(() => {
         if (!markers.isConnected) {
