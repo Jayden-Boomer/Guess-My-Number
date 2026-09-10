@@ -607,10 +607,12 @@ function renderTurn() {
                 arrow.appendChild(symbol);
             });
             marker.appendChild(arrow);
-            const label = document.createElement("span");
-            label.className = "guess-marker-value";
-            label.textContent = value;
-            marker.appendChild(label);
+            if (!missedGuesses.has(value)) {
+                const label = document.createElement("span");
+                label.className = "guess-marker-value";
+                label.textContent = value;
+                marker.appendChild(label);
+            }
             markers.appendChild(marker);
             descriptions.push([...directions.keys()].join(" and ") + " " + value);
         });
