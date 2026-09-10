@@ -321,6 +321,17 @@ select:focus {
 	margin-top: 30px;
 }
 
+.guess-endpoint-marker {
+	position: absolute;
+	top: 50%;
+	width: 0;
+	height: 0;
+}
+
+.guess-endpoint-marker > .guess-marker-value {
+	color: var(--text);
+}
+
 .guess-slider-row.has-marker-values {
 	margin-bottom: var(--marker-label-space, 36px);
 }

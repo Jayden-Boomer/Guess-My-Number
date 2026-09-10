@@ -613,9 +613,20 @@ function renderTurn() {
             markers.appendChild(marker);
             descriptions.push([...directions.keys()].join(" and ") + " " + value);
         });
+        [1, game.maxNumber].forEach(value => {
+            if (missedGuesses.has(value) || notesByValue.has(value)) return;
+            const marker = document.createElement("span");
+            marker.className = "guess-endpoint-marker";
+            marker.style.left = position(value);
+            const label = document.createElement("span");
+            label.className = "guess-marker-value";
+            label.textContent = value;
+            marker.appendChild(label);
+            markers.appendChild(marker);
+        });
         guessInput.setAttribute("aria-description", descriptions.length ? "Notes: " + descriptions.join("; ") + "." : "No notes on the number line.");
         guessPanel.querySelector(".guess-slider-row").classList.toggle("has-note-markers", notesByValue.size > 0);
-        guessPanel.querySelector(".guess-slider-row").classList.toggle("has-marker-values", missedGuesses.size > 0 || notesByValue.size > 0);
+        guessPanel.querySelector(".guess-slider-row").classList.add("has-marker-values");
         updateSelectedNoteMarkers();
         layoutMarkerValues();
     }
