@@ -404,8 +404,9 @@ function createNumberLineScale(excludedNote = null) {
     // Half-number boundaries leave room even when only one candidate remains.
     const start = Math.max(1, lower - 0.5);
     const end = Math.min(max, upper + 0.5);
-    const left = Math.min(0.12, (start - 1) / (max - 1));
-    const right = Math.min(0.12, (max - end) / (max - 1));
+    // Invalid regions retain half their proportional width.
+    const left = 0.5 * (start - 1) / (max - 1);
+    const right = 0.5 * (max - end) / (max - 1);
     const values = [1, start, end, max];
     const positions = [0, left, 1 - right, 1];
     function interpolate(value, from, to) {
