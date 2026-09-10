@@ -390,6 +390,86 @@ function incorrectGuesses(player) {
     return new Set(game.history.filter(item => item.type === "guess" && item.player === player && !item.correct).map(item => item.guess));
 }
 
+function createNumberLineScale(excludedNote = null) {
+    const max = game.maxNumber;
+    let lower = 1, upper = max;
+    answerNotes.forEach((note, index) => {
+        const item = game.history[index];
+        if (index === excludedNote || item?.type !== "question" || item.asker !== localPlayer()) return;
+        if (note.direction === "above") lower = Math.max(lower, note.value + 1);
+        if (note.direction === "below") upper = Math.min(upper, note.value - 1);
+    });
+    const conflict = lower > upper;
+    if (conflict) { lower = 1; upper = max; }
+    // Half-number boundaries leave room even when only one candidate remains.
+    const start = Math.max(1, lower - 0.5);
+    const end = Math.min(max, upper + 0.5);
+    const left = Math.min(0.12, (start - 1) / (max - 1));
+    const right = Math.min(0.12, (max - end) / (max - 1));
+    const values = [1, start, end, max];
+    const positions = [0, left, 1 - right, 1];
+    function interpolate(value, from, to) {
+        value = Math.max(from[0], Math.min(from[3], value));
+        for (let i = 1; i < from.length; i++) {
+            if (value <= from[i] && from[i] > from[i - 1]) {
+                return to[i - 1] + (value - from[i - 1]) / (from[i] - from[i - 1]) * (to[i] - to[i - 1]);
+            }
+        }
+        return to[3];
+    }
+    return {
+        position: value => interpolate(value, values, positions),
+        number: position => Math.round(interpolate(position, positions, values)),
+        left, right,
+        description: conflict ? "Notes conflict; showing the full range evenly." :
+            lower > 1 || upper < max ? `Notes suggest ${lower}–${upper}. Other numbers are compressed at the ends; all numbers remain selectable.` : ""
+    };
+}
+
+function setupNumberLine(input, onInput, excludedNote = null) {
+    let selected = Number(input.value);
+    let scale;
+    input.min = "0";
+    input.max = "100000";
+    input.step = "1";
+    const hint = document.createElement("p");
+    hint.className = "hint number-line-hint";
+    hint.id = `${input.id}-scale-hint`;
+    input.setAttribute("aria-describedby", [input.getAttribute("aria-describedby"), hint.id].filter(Boolean).join(" "));
+    const setValue = value => {
+        selected = value;
+        input.value = Math.round(scale.position(value) * 100000);
+        input.setAttribute("aria-valuetext", String(value));
+        input.setAttribute("aria-valuenow", String(value));
+        input.setAttribute("aria-valuemin", "1");
+        input.setAttribute("aria-valuemax", String(game.maxNumber));
+    };
+    const refresh = () => {
+        scale = createNumberLineScale(excludedNote);
+        setValue(selected);
+        hint.textContent = scale.description;
+        hint.hidden = !scale.description;
+        input.style.background = `linear-gradient(to right, var(--line) ${scale.left * 100}%, var(--accent-theme-color) ${scale.left * 100}%, var(--accent-theme-color) ${(1 - scale.right) * 100}%, var(--line) ${(1 - scale.right) * 100}%)`;
+    };
+    input.addEventListener("input", () => {
+        setValue(scale.number(Number(input.value) / 100000));
+        onInput(selected);
+    });
+    input.addEventListener("keydown", event => {
+        const changes = { ArrowLeft: -1, ArrowDown: -1, ArrowRight: 1, ArrowUp: 1, PageDown: -10, PageUp: 10 };
+        let value;
+        if (event.key === "Home") value = 1;
+        else if (event.key === "End") value = game.maxNumber;
+        else if (event.key in changes) value = selected + changes[event.key];
+        else return;
+        event.preventDefault();
+        setValue(Math.max(1, Math.min(game.maxNumber, value)));
+        onInput(selected);
+    });
+    refresh();
+    return { setValue, refresh, hint, position: value => scale.position(value) * 100 + "%" };
+}
+
 function renderTurn() {
     saveQuestionDraft();
     gameCard.innerHTML = ""; const view = cloneTemplate("turnTemplate");
@@ -415,9 +495,11 @@ function renderTurn() {
     const missedGuesses = incorrectGuesses(localPlayer());
     const guessSubmit = view.querySelector(".guess-form button[type='submit']");
     const markers = view.querySelector(".guess-markers");
+    const guessLine = setupNumberLine(guessInput, value => { guessValue.value = value; updateGuessValidity(); });
+    guessPanel.querySelector(".guess-slider-row").after(guessLine.hint);
     function updateSelectedNoteMarkers() {
         markers.querySelectorAll(".guess-note-marker").forEach(marker => {
-            marker.classList.toggle("is-selected", Number(marker.dataset.value) === Number(guessInput.value));
+            marker.classList.toggle("is-selected", Number(marker.dataset.value) === Number(guessValue.value));
         });
     }
     function updateGuessValidity() {
@@ -433,7 +515,8 @@ function renderTurn() {
     function updateGuessMarkers() {
         markers.innerHTML = "";
         markers.removeAttribute("aria-hidden");
-        const position = value => (game.maxNumber === 1 ? 50 : (value - 1) / (game.maxNumber - 1) * 100) + "%";
+        guessLine.refresh();
+        const position = guessLine.position;
         missedGuesses.forEach(guess => {
             const marker = document.createElement("span");
             marker.className = "guess-marker";
@@ -506,16 +589,15 @@ function renderTurn() {
         view.querySelector(".mode-tabs").classList.add("hidden");
         view.querySelector(".guess-panel .hint").textContent = "Guess correctly to tie. A wrong guess ends the game.";
     }
-    guessInput.addEventListener("input", () => { guessValue.value = guessInput.value; updateGuessValidity(); });
     guessValue.addEventListener("input", () => {
         let value = Number(guessValue.value);
         if (value > game.maxNumber) { value = game.maxNumber; guessValue.value = value; }
-        if (Number.isInteger(value) && value >= 1 && value <= game.maxNumber) guessInput.value = value;
+        if (Number.isInteger(value) && value >= 1 && value <= game.maxNumber) guessLine.setValue(value);
         updateGuessValidity();
     });
     updateGuessMarkers();
     updateGuessValidity();
-    view.querySelector(".guess-form").addEventListener("submit", event => { event.preventDefault(); if (!updateGuessValidity()) return; const guess = Number(guessValue.value); if (!Number.isInteger(guess) || guess < 1 || guess > game.maxNumber) guessError.textContent = `Enter a whole number from 1 to ${game.maxNumber}.`; else { guessInput.value = guess; submitAction({ type: "guess", guess }); } });
+    view.querySelector(".guess-form").addEventListener("submit", event => { event.preventDefault(); if (!updateGuessValidity()) return; const guess = Number(guessValue.value); if (!Number.isInteger(guess) || guess < 1 || guess > game.maxNumber) guessError.textContent = `Enter a whole number from 1 to ${game.maxNumber}.`; else { guessLine.setValue(guess); submitAction({ type: "guess", guess }); } });
     view.querySelector(".rules-btn").addEventListener("click", () => rulesDialog.showModal()); appendConversation(view); gameCard.appendChild(view); setTimeout(() => (game.winner !== null ? guessValue : questionInput).focus(), 0);
 }
 function renderAnswer() {
@@ -598,11 +680,12 @@ function renderHistoryInto(view, includePending = false) {
                     });
                     entry.dispatchEvent(new Event("answer-notes-change", { bubbles: true }));
                 };
-                input.addEventListener("input", () => {
-                    note.value = Number(input.value);
+                const noteLine = setupNumberLine(input, value => {
+                    note.value = value;
                     answerNotes.set(historyIndex, note);
                     updateNote();
-                });
+                }, historyIndex);
+                list.addEventListener("answer-notes-change", noteLine.refresh);
                 directions.forEach(direction => {
                     const choice = document.createElement("button");
                     choice.type = "button";
@@ -628,7 +711,7 @@ function renderHistoryInto(view, includePending = false) {
                     if (note.expanded) input.focus();
                 });
                 updateNote();
-                panel.append(label, input, choices);
+                panel.append(label, input, noteLine.hint, choices);
                 entry.append(button, panel);
             }
         }
