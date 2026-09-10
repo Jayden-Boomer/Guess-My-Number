@@ -461,14 +461,27 @@ function renderHistoryInto(view, includePending = false) {
     if (!game.history.length && !includePending) { list.innerHTML = `<div class="history-empty">No questions or guesses yet.</div>`; return; }
     if (includePending && game.pendingQuestion) {
         const entry = document.createElement("div"); entry.className = "history-item";
-        entry.innerHTML = `<div class="history-meta">${playerName(game.pendingQuestion.asker)} asked • awaiting answer</div><p></p>`;
+        const isOwnQuestion = game.pendingQuestion.asker === localPlayer();
+        entry.classList.toggle("own-question", isOwnQuestion);
+        entry.innerHTML = `<div class="history-meta">${isOwnQuestion ? "You" : playerName(game.pendingQuestion.asker)} asked • awaiting answer</div><p></p>`;
         entry.querySelector("p").textContent = `“${game.pendingQuestion.question}”`;
         list.appendChild(entry);
     }
     [...game.history].reverse().forEach(item => {
         const entry = document.createElement("div"); entry.className = "history-item";
-        if (item.type === "question") { entry.innerHTML = `<div class="history-meta">${playerName(item.asker)} asked</div><p></p><p class="answer"></p>`; entry.querySelector("p").textContent = `“${item.question}”`; entry.querySelector(".answer").textContent = `${playerName(item.answerer)}: ${item.answer}`; }
-        else { entry.innerHTML = `<div class="history-meta">${playerName(item.player)} guessed</div><p></p>`; entry.querySelector("p").textContent = `${item.guess} — ${item.correct ? "correct" : "incorrect"}`; }
+        if (item.type === "question") {
+            const isOwnQuestion = item.asker === localPlayer();
+            entry.classList.toggle("own-question", isOwnQuestion);
+            entry.innerHTML = `<div class="history-meta">${isOwnQuestion ? "You" : playerName(item.asker)} asked</div><p></p><p class="answer"></p>`;
+            entry.querySelector("p").textContent = `“${item.question}”`;
+            entry.querySelector(".answer").textContent = `${playerName(item.answerer)}: ${item.answer}`;
+        }
+        else {
+            const isOwnGuess = item.player === localPlayer();
+            entry.classList.toggle("own-guess", isOwnGuess);
+            entry.innerHTML = `<div class="history-meta">${isOwnGuess ? "You" : playerName(item.player)} guessed</div><p></p>`;
+            entry.querySelector("p").textContent = `${item.guess} — ${item.correct ? "correct" : "incorrect"}`;
+        }
         list.appendChild(entry);
     });
 }

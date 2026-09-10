@@ -710,6 +710,12 @@ select:focus {
 	background: rgb(from var(--white) r g b / 2.5%);
 }
 
+.history-item.own-guess,
+.history-item.own-question {
+	border-color: rgb(from var(--theme-color) r g b / 25%);
+	background: rgb(from var(--theme-color) r g b / 8%);
+}
+
 .history-meta {
 	margin-bottom: 6px;
 	color: var(--text-history-meta);
