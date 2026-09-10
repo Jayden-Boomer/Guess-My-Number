@@ -5,6 +5,7 @@ const NICKNAME_COOKIE = "hidden-number-duel-nickname";
 const NICKNAME_COOKIE_MAX_AGE = 315360000;
 let lobbyToastTimer = null;
 let lobbyToastRemoveTimer = null;
+let noteHighlightTimer = null;
 const answerNotes = new Map();
 const game = {
     role: null,
@@ -410,13 +411,13 @@ function renderTurn() {
     const missedGuesses = incorrectGuesses(localPlayer());
     const guessSubmit = view.querySelector(".guess-form button[type='submit']");
     const markers = view.querySelector(".guess-markers");
-    missedGuesses.forEach(guess => {
-        const marker = document.createElement("span");
-        marker.className = "guess-marker";
-        marker.style.left = `${(guess - 1) / (game.maxNumber - 1) * 100}%`;
-        markers.appendChild(marker);
-    });
+    function updateSelectedNoteMarkers() {
+        markers.querySelectorAll(".guess-note-marker").forEach(marker => {
+            marker.classList.toggle("is-selected", Number(marker.dataset.value) === Number(guessInput.value));
+        });
+    }
     function updateGuessValidity() {
+        updateSelectedNoteMarkers();
         const missed = missedGuesses.has(Number(guessValue.value));
         guessValue.classList.toggle("incorrect-guess", missed);
         guessValue.setAttribute("aria-invalid", String(missed));
@@ -425,6 +426,75 @@ function renderTurn() {
         guessError.textContent = missed ? "You already guessed this number incorrectly. Choose another number." : "";
         return !missed;
     }
+    function updateGuessMarkers() {
+        markers.innerHTML = "";
+        markers.removeAttribute("aria-hidden");
+        const position = value => (game.maxNumber === 1 ? 50 : (value - 1) / (game.maxNumber - 1) * 100) + "%";
+        missedGuesses.forEach(guess => {
+            const marker = document.createElement("span");
+            marker.className = "guess-marker";
+            marker.style.left = position(guess);
+            markers.appendChild(marker);
+        });
+        const symbols = { above: "➡", below: "⬅", around: "⬌" };
+        const notesByValue = new Map();
+        answerNotes.forEach((note, index) => {
+            const item = game.history[index];
+            if (!item || item.type !== "question" || item.asker !== localPlayer() || !symbols[note.direction]) return;
+            if (!notesByValue.has(note.value)) notesByValue.set(note.value, new Map());
+            const directions = notesByValue.get(note.value);
+            if (!directions.has(note.direction)) directions.set(note.direction, []);
+            directions.get(note.direction).push(index);
+        });
+        const descriptions = [];
+        notesByValue.forEach((directions, value) => {
+            const marker = document.createElement("span");
+            marker.className = "guess-note-marker";
+            marker.dataset.value = value;
+            marker.style.left = position(value);
+            const arrow = document.createElement("span");
+            arrow.className = "guess-note-arrow";
+            directions.forEach((indices, direction) => {
+                const symbol = document.createElement("span");
+                symbol.className = "guess-note-symbol";
+                symbol.dataset.direction = direction;
+                symbol.tabIndex = 0;
+                symbol.setAttribute("aria-label", `Note: ${direction} ${value}`);
+                symbol.textContent = symbols[direction];
+                const popup = document.createElement("span");
+                popup.className = "guess-note-popup";
+                indices.forEach((index, noteIndex) => {
+                    const link = document.createElement("button");
+                    link.type = "button";
+                    link.className = "ghost-btn";
+                    link.textContent = indices.length === 1 ? "Go to note" : `Go to note ${noteIndex + 1}`;
+                    link.addEventListener("click", () => {
+                        const target = document.getElementById(`answer-note-entry-${index}`);
+                        if (!target) return;
+                        window.clearTimeout(noteHighlightTimer);
+                        document.querySelectorAll(".history-item.note-highlight").forEach(entry => entry.classList.remove("note-highlight"));
+                        target.classList.add("note-highlight");
+                        noteHighlightTimer = window.setTimeout(() => {
+                            target.classList.remove("note-highlight");
+                            noteHighlightTimer = null;
+                        }, 500);
+                        target.querySelector(".answer-notes-button").focus({ preventScroll: true });
+                        target.scrollIntoView({ block: "center", behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
+                    });
+                    popup.appendChild(link);
+                });
+                symbol.appendChild(popup);
+                arrow.appendChild(symbol);
+            });
+            marker.appendChild(arrow);
+            markers.appendChild(marker);
+            descriptions.push([...directions.keys()].join(" and ") + " " + value);
+        });
+        guessInput.setAttribute("aria-description", descriptions.length ? "Notes: " + descriptions.join("; ") + "." : "No notes on the number line.");
+        guessPanel.querySelector(".guess-slider-row").classList.toggle("has-note-markers", notesByValue.size > 0);
+        updateSelectedNoteMarkers();
+    }
+    view.querySelector(".screen").addEventListener("answer-notes-change", updateGuessMarkers);
     if (game.winner !== null) {
         view.querySelector(".screen-title").textContent = "Make your final guess";
         view.querySelector(".turn-label").textContent = `${playerName(game.winner)} guessed correctly. You have one final guess to tie!`;
@@ -439,6 +509,7 @@ function renderTurn() {
         if (Number.isInteger(value) && value >= 1 && value <= game.maxNumber) guessInput.value = value;
         updateGuessValidity();
     });
+    updateGuessMarkers();
     updateGuessValidity();
     view.querySelector(".guess-form").addEventListener("submit", event => { event.preventDefault(); if (!updateGuessValidity()) return; const guess = Number(guessValue.value); if (!Number.isInteger(guess) || guess < 1 || guess > game.maxNumber) guessError.textContent = `Enter a whole number from 1 to ${game.maxNumber}.`; else { guessInput.value = guess; submitAction({ type: "guess", guess }); } });
     view.querySelector(".rules-btn").addEventListener("click", () => rulesDialog.showModal()); appendConversation(view); gameCard.appendChild(view); setTimeout(() => (game.winner !== null ? guessValue : questionInput).focus(), 0);
@@ -479,6 +550,7 @@ function renderHistoryInto(view, includePending = false) {
             if (isOwnQuestion) {
                 entry.classList.add("has-answer-note");
                 const historyIndex = game.history.length - 1 - reverseIndex;
+                entry.id = `answer-note-entry-${historyIndex}`;
                 const note = answerNotes.get(historyIndex) || { value: Math.ceil(game.maxNumber / 2), direction: null, expanded: false };
                 const directions = [
                     { value: "above", symbol: "⬆", label: "Above" },
@@ -520,6 +592,7 @@ function renderHistoryInto(view, includePending = false) {
                     choices.querySelectorAll("button").forEach(choice => {
                         choice.setAttribute("aria-pressed", String(choice.dataset.direction === note.direction));
                     });
+                    entry.dispatchEvent(new Event("answer-notes-change", { bubbles: true }));
                 };
                 input.addEventListener("input", () => {
                     note.value = Number(input.value);
