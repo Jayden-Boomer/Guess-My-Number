@@ -475,7 +475,7 @@ function renderTurn() {
     gameCard.innerHTML = ""; const view = cloneTemplate("turnTemplate");
     view.querySelector(".turn-label").textContent = `${playerName(game.currentPlayer)}'s turn • trying to find ${playerName(opponentOf(game.currentPlayer))}'s number`;
     const tabs = [...view.querySelectorAll(".mode-tab")]; const questionPanel = view.querySelector(".question-panel"); const guessPanel = view.querySelector(".guess-panel");
-    tabs.forEach(tab => tab.addEventListener("click", () => { tabs.forEach(item => item.classList.toggle("active", item === tab)); const isQuestion = tab.dataset.mode === "question"; questionPanel.classList.toggle("hidden", !isQuestion); guessPanel.classList.toggle("hidden", isQuestion); }));
+    tabs.forEach(tab => tab.addEventListener("click", () => { tabs.forEach(item => item.classList.toggle("active", item === tab)); const isQuestion = tab.dataset.mode === "question"; questionPanel.classList.toggle("hidden", !isQuestion); guessPanel.classList.toggle("hidden", isQuestion); if (!isQuestion) guessValue.focus(); }));
     const questionInput = view.querySelector("#questionInput"); const questionError = view.querySelector(".question-error");
     const charCount = view.querySelector(".char-count");
     questionInput.value = game.questionDraft;
