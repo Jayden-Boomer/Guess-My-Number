@@ -449,7 +449,7 @@ function setupNumberLine(input, onInput, excludedNote = null) {
         setValue(selected);
         hint.textContent = scale.description;
         hint.hidden = !scale.description;
-        input.style.background = `linear-gradient(to right, var(--line) ${scale.left * 100}%, var(--accent-theme-color) ${scale.left * 100}%, var(--accent-theme-color) ${(1 - scale.right) * 100}%, var(--line) ${(1 - scale.right) * 100}%)`;
+        input.style.background = `linear-gradient(to right, var(--line) ${scale.left * 100}%, rgb(from var(--accent-theme-color) r g b / 20%) ${scale.left * 100}%, rgb(from var(--accent-theme-color) r g b / 30%) ${(1 - scale.right) * 100}%, var(--line) ${(1 - scale.right) * 100}%)`;
     };
     input.addEventListener("input", () => {
         setValue(scale.number(Number(input.value) / 100000));
