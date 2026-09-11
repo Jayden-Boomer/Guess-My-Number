@@ -349,7 +349,7 @@ select:focus {
 	transform: translateX(-50%);
 	color: var(--danger);
 	font-size: 12px;
-    background: #151822;
+	background: #151822;
 	font-weight: 700;
 	line-height: 16px;
 	white-space: nowrap;
