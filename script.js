@@ -39,7 +39,31 @@ const numberWords = new Set([
     "quarter", "double", "triple"
 ]);
 
-function cloneTemplate(id) { return document.getElementById(id).content.cloneNode(true); }
+function restrictToDigits(input) {
+    // Number inputs also accept signs, decimals, and exponent notation by default.
+    input.addEventListener("keydown", event => {
+        if (!event.ctrlKey && !event.metaKey && !event.altKey
+            && event.key.length === 1 && /[^0-9]/.test(event.key)) event.preventDefault();
+    });
+    input.addEventListener("beforeinput", event => {
+        if (event.data && /[^0-9]/.test(event.data)) event.preventDefault();
+    });
+    input.addEventListener("paste", event => {
+        if (event.clipboardData && /[^0-9]/.test(event.clipboardData.getData("text"))) event.preventDefault();
+    });
+    input.addEventListener("drop", event => {
+        if (event.dataTransfer && /[^0-9]/.test(event.dataTransfer.getData("text"))) event.preventDefault();
+    });
+    input.addEventListener("input", () => {
+        // Cover input methods that bypass the cancellable events above.
+        if (input.validity.badInput || /[^0-9]/.test(input.value)) input.value = "";
+    });
+}
+function cloneTemplate(id) {
+    const view = document.getElementById(id).content.cloneNode(true);
+    view.querySelectorAll('input[type="number"]').forEach(restrictToDigits);
+    return view;
+}
 function playerName(index) { return game.names[index] || "this player"; }
 function opponentOf(index) { return index === 0 ? 1 : 0; }
 function swapPlayerRoles() {
