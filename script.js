@@ -26,7 +26,6 @@ const gameCard = document.getElementById("gameCard");
 const rulesDialog = document.getElementById("rulesDialog");
 const numberlineSettingsDialog = document.getElementById("numlineSettingsDialog");
 const showNumberlineNotes = document.getElementById("showNumberlineNotes");
-const onlyInnermostNotes = document.getElementById("onlyInnermostNotes");
 const showNumberlineLabels = document.getElementById("showNumberlineLabels");
 const numberlineCompression = document.getElementById("numberlineCompression");
 const handoffDialog = document.getElementById("handoffDialog");
@@ -410,7 +409,7 @@ function createNumberLineScale(excludedNote = null) {
     const start = Math.max(1, lower - 0.5);
     const end = Math.min(max, upper + 0.5);
     // With compression off, every number occupies equal space.
-    const compression = showNumberlineNotes.checked && numberlineCompression.checked ? 0.5 : 1;
+    const compression = showNumberlineNotes.value !== "none" && numberlineCompression.checked ? 0.5 : 1;
     const left = compression * (start - 1) / (max - 1);
     const right = compression * (max - end) / (max - 1);
     const values = [1, start, end, max];
@@ -429,7 +428,7 @@ function createNumberLineScale(excludedNote = null) {
         number: position => Math.round(interpolate(position, positions, values)),
         left: interpolate(lower, values, positions),
         right: 1 - interpolate(upper, values, positions),
-        description: !showNumberlineNotes.checked ? "" : conflict ? "Notes conflict; showing the full range evenly." :
+        description: showNumberlineNotes.value === "none" ? "" : conflict ? "Notes conflict; showing the full range evenly." :
             lower > 1 || upper < max ? `Notes suggest ${lower}–${upper}. ${numberlineCompression.checked ? "Other numbers are compressed at the ends; all numbers remain selectable." : "All numbers are spaced evenly and remain selectable."}` : ""
     };
 }
@@ -461,7 +460,7 @@ function setupNumberLine(input, onInput, excludedNote = null) {
         const start = scale.left === 0 ? "0%" : `calc(${scale.left * 100}% + ${12 - 24 * scale.left}px)`;
         const end = scale.right === 0 ? "100%" : `calc(${(1 - scale.right) * 100}% + ${12 - 24 * (1 - scale.right)}px)`;
         input.style.background = `linear-gradient(to right, var(--line) ${start}, rgb(from var(--accent-theme-color) r g b / 20%) ${start}, rgb(from var(--accent-theme-color) r g b / 30%) ${end}, var(--line) ${end})`;
-        if (!showNumberlineNotes.checked) input.style.background = "var(--line)";
+        if (showNumberlineNotes.value === "none") input.style.background = "var(--line)";
     };
     input.addEventListener("numberline-settings-change", refresh);
     input.addEventListener("input", () => {
@@ -512,10 +511,28 @@ function renderTurn() {
     const guessLine = setupNumberLine(guessInput, value => { guessValue.value = value; updateGuessValidity(); });
     guessPanel.querySelector(".guess-slider-row").after(guessLine.hint);
     function updateSelectedNoteMarkers() {
-        markers.querySelectorAll(".guess-note-marker").forEach(marker => {
+        markers.querySelectorAll("[data-value]").forEach(marker => {
             marker.classList.toggle("is-selected", Number(marker.dataset.value) === Number(guessValue.value));
         });
     }
+    const sliderRow = guessPanel.querySelector(".guess-slider-row");
+    sliderRow.addEventListener("mousemove", event => {
+        if (showNumberlineLabels.value !== "hover") return;
+        markers.querySelectorAll("[data-value]").forEach(marker => {
+            const label = marker.querySelector(".guess-marker-value");
+            const targets = [marker, label].filter(Boolean);
+            const hovered = targets.some(target => {
+                const bounds = target.getBoundingClientRect();
+                const padding = target === marker ? 6 : 0;
+                return event.clientX >= bounds.left - padding && event.clientX <= bounds.right + padding
+                    && event.clientY >= bounds.top - padding && event.clientY <= bounds.bottom + padding;
+            });
+            marker.classList.toggle("is-hovered", hovered);
+        });
+    });
+    sliderRow.addEventListener("mouseleave", () => {
+        markers.querySelectorAll(".is-hovered").forEach(marker => marker.classList.remove("is-hovered"));
+    });
     function updateGuessValidity() {
         updateSelectedNoteMarkers();
         const missed = missedGuesses.has(Number(guessValue.value));
@@ -550,30 +567,33 @@ function renderTurn() {
     markerResizeObserver.observe(markers);
     function updateGuessMarkers() {
         markers.innerHTML = "";
+        const labelsVisible = showNumberlineLabels.value !== "never";
+        markers.classList.toggle("labels-on-hover", showNumberlineLabels.value === "hover");
         markers.removeAttribute("aria-hidden");
         guessLine.refresh();
         const position = guessLine.position;
         missedGuesses.forEach(guess => {
             const marker = document.createElement("span");
             marker.className = "guess-marker";
+            marker.dataset.value = guess;
             marker.style.left = position(guess);
             const label = document.createElement("span");
             label.className = "guess-marker-value";
             label.textContent = guess;
-            if (showNumberlineLabels.checked) marker.appendChild(label);
+            if (labelsVisible && guess !== 1 && guess !== game.maxNumber) marker.appendChild(label);
             markers.appendChild(marker);
         });
         const symbols = { above: "➡", below: "⬅", around: "⬌" };
         const notesByValue = new Map();
         answerNotes.forEach((note, index) => {
             const item = game.history[index];
-            if (!showNumberlineNotes.checked || !item || item.type !== "question" || item.asker !== localPlayer() || !symbols[note.direction]) return;
+            if (showNumberlineNotes.value === "none" || !item || item.type !== "question" || item.asker !== localPlayer() || !symbols[note.direction]) return;
             if (!notesByValue.has(note.value)) notesByValue.set(note.value, new Map());
             const directions = notesByValue.get(note.value);
             if (!directions.has(note.direction)) directions.set(note.direction, []);
             directions.get(note.direction).push(index);
         });
-        if (onlyInnermostNotes.checked) {
+        if (showNumberlineNotes.value === "innermost") {
             let innermostAbove = -Infinity, innermostBelow = Infinity;
             notesByValue.forEach((directions, value) => {
                 if (directions.has("above")) innermostAbove = Math.max(innermostAbove, value);
@@ -627,7 +647,7 @@ function renderTurn() {
                 arrow.appendChild(symbol);
             });
             marker.appendChild(arrow);
-            if (showNumberlineLabels.checked && !missedGuesses.has(value)) {
+            if (labelsVisible && value !== 1 && value !== game.maxNumber && !missedGuesses.has(value)) {
                 const label = document.createElement("span");
                 label.className = "guess-marker-value";
                 label.textContent = value;
@@ -637,9 +657,9 @@ function renderTurn() {
             descriptions.push([...directions.keys()].join(" and ") + " " + value);
         });
         [1, game.maxNumber].forEach(value => {
-            if (showNumberlineLabels.checked && (missedGuesses.has(value) || notesByValue.has(value))) return;
             const marker = document.createElement("span");
             marker.className = "guess-endpoint-marker";
+            marker.dataset.value = value;
             marker.style.left = position(value);
             const label = document.createElement("span");
             label.className = "guess-marker-value";
@@ -833,15 +853,15 @@ function resetGame() {
 document.querySelector(".close-dialog").addEventListener("click", () => rulesDialog.close());
 document.querySelector(".close-settings-dialog").addEventListener("click", () => numberlineSettingsDialog.close());
 function refreshNumberlineSettings() {
-    onlyInnermostNotes.disabled = !showNumberlineNotes.checked;
-    numberlineCompression.disabled = !showNumberlineNotes.checked;
-    if (numberlineCompression.disabled) numberlineCompression.checked = false;
+    numberlineCompression.disabled = showNumberlineNotes.value === "none";
     gameCard.querySelectorAll(".guess-slider, .screen").forEach(element => {
         element.dispatchEvent(new Event("numberline-settings-change"));
     });
 }
 numberlineSettingsDialog.addEventListener("change", refreshNumberlineSettings);
 numberlineSettingsDialog.querySelector(".reset-numberline-settings").addEventListener("click", () => {
+    showNumberlineNotes.value = "innermost";
+    showNumberlineLabels.value = "always";
     numberlineSettingsDialog.querySelectorAll('input[type="checkbox"]').forEach(input => {
         input.checked = input.defaultChecked;
     });

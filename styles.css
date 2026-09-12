@@ -366,6 +366,18 @@ select:focus {
 	background: currentColor;
 }
 
+.labels-on-hover > :not(.guess-endpoint-marker) > .guess-marker-value {
+	opacity: 0;
+	pointer-events: auto;
+}
+
+.labels-on-hover .is-hovered > .guess-marker-value,
+.labels-on-hover .is-selected > .guess-marker-value,
+.labels-on-hover .guess-note-marker:has(.guess-note-symbol:hover) > .guess-marker-value,
+.labels-on-hover .guess-note-marker:focus-within > .guess-marker-value {
+	opacity: 1;
+}
+
 .guess-note-marker > .guess-marker-value {
 	color: var(--accent-theme-color);
 }
@@ -818,6 +830,14 @@ select:focus {
 	display: grid;
 	gap: 18px;
 	margin-left: 30px;
+}
+
+.settings-options select {
+	padding: 8px 12px;
+	border: 1px solid var(--line);
+	border-radius: 10px;
+	background: var(--surface-input);
+	color: var(--text);
 }
 
 .settings-suboptions label:has(input:disabled) {
