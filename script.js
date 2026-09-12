@@ -26,6 +26,7 @@ const gameCard = document.getElementById("gameCard");
 const rulesDialog = document.getElementById("rulesDialog");
 const numberlineSettingsDialog = document.getElementById("numlineSettingsDialog");
 const showNumberlineNotes = document.getElementById("showNumberlineNotes");
+const onlyInnermostNotes = document.getElementById("onlyInnermostNotes");
 const showNumberlineLabels = document.getElementById("showNumberlineLabels");
 const numberlineCompression = document.getElementById("numberlineCompression");
 const handoffDialog = document.getElementById("handoffDialog");
@@ -572,11 +573,24 @@ function renderTurn() {
             if (!directions.has(note.direction)) directions.set(note.direction, []);
             directions.get(note.direction).push(index);
         });
+        if (onlyInnermostNotes.checked) {
+            let innermostAbove = -Infinity, innermostBelow = Infinity;
+            notesByValue.forEach((directions, value) => {
+                if (directions.has("above")) innermostAbove = Math.max(innermostAbove, value);
+                if (directions.has("below")) innermostBelow = Math.min(innermostBelow, value);
+            });
+            notesByValue.forEach((directions, value) => {
+                if (value !== innermostAbove) directions.delete("above");
+                if (value !== innermostBelow) directions.delete("below");
+                if (!directions.size) notesByValue.delete(value);
+            });
+        }
         const descriptions = [];
         notesByValue.forEach((directions, value) => {
             const marker = document.createElement("span");
             marker.className = "guess-note-marker";
             marker.dataset.value = value;
+            if (directions.size === 1) marker.dataset.direction = directions.keys().next().value;
             marker.style.left = position(value);
             const arrow = document.createElement("span");
             arrow.className = "guess-note-arrow";
@@ -819,6 +833,7 @@ function resetGame() {
 document.querySelector(".close-dialog").addEventListener("click", () => rulesDialog.close());
 document.querySelector(".close-settings-dialog").addEventListener("click", () => numberlineSettingsDialog.close());
 function refreshNumberlineSettings() {
+    onlyInnermostNotes.disabled = !showNumberlineNotes.checked;
     numberlineCompression.disabled = !showNumberlineNotes.checked;
     if (numberlineCompression.disabled) numberlineCompression.checked = false;
     gameCard.querySelectorAll(".guess-slider, .screen").forEach(element => {
