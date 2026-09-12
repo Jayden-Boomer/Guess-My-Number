@@ -973,18 +973,21 @@ select:focus {
 }
 
 .answer-notes-button[data-direction="above"],
+.guess-note-marker[data-direction="above"] > .guess-marker-value,
 .guess-note-symbol[data-direction="above"],
 .answer-note-choice[data-direction="above"] {
 	color: #65df97;
 }
 
 .answer-notes-button[data-direction="below"],
+.guess-note-marker[data-direction="below"] > .guess-marker-value,
 .guess-note-symbol[data-direction="below"],
 .answer-note-choice[data-direction="below"] {
-	color: #ff8585;
+	color: #ffa552;
 }
 
 .answer-notes-button[data-direction="around"],
+.guess-note-marker[data-direction="around"] > .guess-marker-value,
 .guess-note-symbol[data-direction="around"],
 .answer-note-choice[data-direction="around"] {
 	color: #f5d76e;
