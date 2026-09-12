@@ -25,6 +25,9 @@ const game = {
 const gameCard = document.getElementById("gameCard");
 const rulesDialog = document.getElementById("rulesDialog");
 const numberlineSettingsDialog = document.getElementById("numlineSettingsDialog");
+const showNumberlineNotes = document.getElementById("showNumberlineNotes");
+const showNumberlineLabels = document.getElementById("showNumberlineLabels");
+const numberlineCompression = document.getElementById("numberlineCompression");
 const handoffDialog = document.getElementById("handoffDialog");
 const handoffCloseButton = document.querySelector(".close-handoff-dialog");
 let handoffDialogManualCloseAllowed = false;
@@ -405,9 +408,10 @@ function createNumberLineScale(excludedNote = null) {
     // Half-number boundaries leave room even when only one candidate remains.
     const start = Math.max(1, lower - 0.5);
     const end = Math.min(max, upper + 0.5);
-    // Invalid regions retain half their proportional width.
-    const left = 0.5 * (start - 1) / (max - 1);
-    const right = 0.5 * (max - end) / (max - 1);
+    // With compression off, every number occupies equal space.
+    const compression = showNumberlineNotes.checked && numberlineCompression.checked ? 0.5 : 1;
+    const left = compression * (start - 1) / (max - 1);
+    const right = compression * (max - end) / (max - 1);
     const values = [1, start, end, max];
     const positions = [0, left, 1 - right, 1];
     function interpolate(value, from, to) {
@@ -424,8 +428,8 @@ function createNumberLineScale(excludedNote = null) {
         number: position => Math.round(interpolate(position, positions, values)),
         left: interpolate(lower, values, positions),
         right: 1 - interpolate(upper, values, positions),
-        description: conflict ? "Notes conflict; showing the full range evenly." :
-            lower > 1 || upper < max ? `Notes suggest ${lower}–${upper}. Other numbers are compressed at the ends; all numbers remain selectable.` : ""
+        description: !showNumberlineNotes.checked ? "" : conflict ? "Notes conflict; showing the full range evenly." :
+            lower > 1 || upper < max ? `Notes suggest ${lower}–${upper}. ${numberlineCompression.checked ? "Other numbers are compressed at the ends; all numbers remain selectable." : "All numbers are spaced evenly and remain selectable."}` : ""
     };
 }
 
@@ -456,7 +460,9 @@ function setupNumberLine(input, onInput, excludedNote = null) {
         const start = scale.left === 0 ? "0%" : `calc(${scale.left * 100}% + ${12 - 24 * scale.left}px)`;
         const end = scale.right === 0 ? "100%" : `calc(${(1 - scale.right) * 100}% + ${12 - 24 * (1 - scale.right)}px)`;
         input.style.background = `linear-gradient(to right, var(--line) ${start}, rgb(from var(--accent-theme-color) r g b / 20%) ${start}, rgb(from var(--accent-theme-color) r g b / 30%) ${end}, var(--line) ${end})`;
+        if (!showNumberlineNotes.checked) input.style.background = "var(--line)";
     };
+    input.addEventListener("numberline-settings-change", refresh);
     input.addEventListener("input", () => {
         setValue(scale.number(Number(input.value) / 100000));
         onInput(selected);
@@ -553,14 +559,14 @@ function renderTurn() {
             const label = document.createElement("span");
             label.className = "guess-marker-value";
             label.textContent = guess;
-            marker.appendChild(label);
+            if (showNumberlineLabels.checked) marker.appendChild(label);
             markers.appendChild(marker);
         });
         const symbols = { above: "➡", below: "⬅", around: "⬌" };
         const notesByValue = new Map();
         answerNotes.forEach((note, index) => {
             const item = game.history[index];
-            if (!item || item.type !== "question" || item.asker !== localPlayer() || !symbols[note.direction]) return;
+            if (!showNumberlineNotes.checked || !item || item.type !== "question" || item.asker !== localPlayer() || !symbols[note.direction]) return;
             if (!notesByValue.has(note.value)) notesByValue.set(note.value, new Map());
             const directions = notesByValue.get(note.value);
             if (!directions.has(note.direction)) directions.set(note.direction, []);
@@ -607,7 +613,7 @@ function renderTurn() {
                 arrow.appendChild(symbol);
             });
             marker.appendChild(arrow);
-            if (!missedGuesses.has(value)) {
+            if (showNumberlineLabels.checked && !missedGuesses.has(value)) {
                 const label = document.createElement("span");
                 label.className = "guess-marker-value";
                 label.textContent = value;
@@ -617,7 +623,7 @@ function renderTurn() {
             descriptions.push([...directions.keys()].join(" and ") + " " + value);
         });
         [1, game.maxNumber].forEach(value => {
-            if (missedGuesses.has(value) || notesByValue.has(value)) return;
+            if (showNumberlineLabels.checked && (missedGuesses.has(value) || notesByValue.has(value))) return;
             const marker = document.createElement("span");
             marker.className = "guess-endpoint-marker";
             marker.style.left = position(value);
@@ -634,6 +640,7 @@ function renderTurn() {
         layoutMarkerValues();
     }
     view.querySelector(".screen").addEventListener("answer-notes-change", updateGuessMarkers);
+    view.querySelector(".screen").addEventListener("numberline-settings-change", updateGuessMarkers);
     if (game.winner !== null) {
         view.querySelector(".screen-title").textContent = "Make your final guess";
         view.querySelector(".turn-label").textContent = `${playerName(game.winner)} guessed correctly. You have one final guess to tie!`;
@@ -811,6 +818,20 @@ function resetGame() {
 }
 document.querySelector(".close-dialog").addEventListener("click", () => rulesDialog.close());
 document.querySelector(".close-settings-dialog").addEventListener("click", () => numberlineSettingsDialog.close());
+function refreshNumberlineSettings() {
+    numberlineCompression.disabled = !showNumberlineNotes.checked;
+    if (numberlineCompression.disabled) numberlineCompression.checked = false;
+    gameCard.querySelectorAll(".guess-slider, .screen").forEach(element => {
+        element.dispatchEvent(new Event("numberline-settings-change"));
+    });
+}
+numberlineSettingsDialog.addEventListener("change", refreshNumberlineSettings);
+numberlineSettingsDialog.querySelector(".reset-numberline-settings").addEventListener("click", () => {
+    numberlineSettingsDialog.querySelectorAll('input[type="checkbox"]').forEach(input => {
+        input.checked = input.defaultChecked;
+    });
+    refreshNumberlineSettings();
+});
 numberlineSettingsDialog.addEventListener("click", event => {
     if (event.target !== numberlineSettingsDialog) return;
     const bounds = numberlineSettingsDialog.getBoundingClientRect();

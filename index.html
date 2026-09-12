@@ -262,7 +262,7 @@
         </div>
     </template>
 
-    <dialog id="numlineSettingsDialog" aria-labelledby="settingsTitle">
+    <dialog id="numlineSettingsDialog" aria-labelledby="numlineSettingsTitle">
         <div class="dialog-inner">
             <div class="dialog-header">
                 <h2 id="numlineSettingsTitle">Numberline Settings</h2>
@@ -270,9 +270,12 @@
                     aria-label="Close settings">&times;</button>
             </div>
             <div class="settings-options">
-                <label><input type="checkbox" /> Show incorrect guesses</label>
-                <label><input type="checkbox" /> Show notes</label>
-                <label><input type="checkbox" /> Numberline compression</label>
+                <label><input id="showNumberlineNotes" type="checkbox" checked /> Show notes</label>
+                <div class="settings-suboptions" role="group" aria-label="Note settings">
+                    <label><input id="numberlineCompression" type="checkbox" checked /> Numberline compression</label>
+                </div>
+                <label><input id="showNumberlineLabels" type="checkbox" checked /> Show labels</label>
+                <button class="ghost-btn reset-numberline-settings" type="button">Reset to defaults</button>
             </div>
         </div>
     </dialog>

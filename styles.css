@@ -814,6 +814,16 @@ select:focus {
 	cursor: pointer;
 }
 
+.settings-suboptions {
+	margin-left: 30px;
+}
+
+.settings-suboptions label:has(input:disabled) {
+	color: var(--muted);
+	cursor: default;
+	opacity: 0.6;
+}
+
 .settings-options input[type="checkbox"] {
 	width: 18px;
 	height: 18px;
